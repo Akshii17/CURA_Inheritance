@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background-color: #050505;
+  color: #ffffff;
+}
+
+/* Background glow blobs */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(120px);
+}
+
+body::before {
+  top: -150px;
+  left: -150px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body::after {
+  bottom: -150px;
+  right: -150px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.auth-input {
+  @apply w-full rounded-lg border border-white/10 bg-[#0f0f0f]
+  px-4 py-3 text-white placeholder-gray-500
+  outline-none focus:border-[#C9A227];
+}
+
+
+
+
