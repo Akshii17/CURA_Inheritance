@@ -28,7 +28,17 @@ const App = () => {
 
   const isAuthed = isConnected && artist;
   console.log("isAuthed",isAuthed);
-  
+
+  if (isLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-red-900 text-white">
+      Loading...
+    </div>
+  );
+  }
+
+
+
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Layout />}>
@@ -55,8 +65,7 @@ const App = () => {
 
   return (
     <>
-      {isLoading ? <Landing /> : <RouterProvider router={router} />}
-
+      <RouterProvider router={router} />
       <Toaster
         toastOptions={{
           style: {

@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useNavigate } from "react-router";
 import toast from "react-hot-toast";
+
+import { useArtistContext } from "../context/ArtistContext";
 
 import art1 from "../assets/sampleArts/art1.jpg";
 import art2 from "../assets/sampleArts/art2.jpg";
@@ -13,9 +16,18 @@ import art7 from "../assets/sampleArts/art7.jpg";
 import art8 from "../assets/sampleArts/art8.jpg";
 import art9 from "../assets/sampleArts/art9.jpg";
 
-import { useArtistContext } from "../context/ArtistContext";
-
 const Landing = () => {
+  const navigate = useNavigate();
+
+  const {
+    contract,
+    isConnected,
+    artist,
+    needsRegistration,
+    isLoading,
+    fetchArtist
+  } = useArtistContext();
+
   const images = [art1, art2, art3, art4, art5, art6, art7, art8, art9];
   const boxes = [
     { top: "8%", left: "30%", size: 90 },
@@ -29,29 +41,43 @@ const Landing = () => {
   ];
 
   const randomImage = () => images[Math.floor(Math.random() * images.length)];
-  const [activeImages, setActiveImages] = useState(boxes.map(() => randomImage()));
+  const [activeImages, setActiveImages] = useState(boxes.map(randomImage));
 
   useEffect(() => {
-    boxes.forEach((_, index) => loopImageChange(index));
+    boxes.forEach((_, i) => loopImageChange(i));
   }, []);
 
   const loopImageChange = (index) => {
-    const delay = Math.random() * 8000 + 4000;
     setTimeout(() => {
       setActiveImages((prev) => {
-        const updated = [...prev];
-        updated[index] = randomImage();
-        return updated;
+        const copy = [...prev];
+        copy[index] = randomImage();
+        return copy;
       });
       loopImageChange(index);
-    }, delay);
+    }, Math.random() * 8000 + 4000);
   };
 
+  // 🔥 AUTH FLOW CONTROL
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (!isConnected || isLoading) return;
+
+    if (artist) {   // this will redirect to home when login is done  
+      setShowModal(false);
+      navigate("/");
+      return;
+    }
+
+    if (needsRegistration) {
+      setShowModal(true);
+    }
+  }, [artist, needsRegistration, isConnected, isLoading]);
+
+  // REGISTER FORM
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
-
-  const { contract, isConnected, address } = useArtistContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
@@ -60,107 +86,54 @@ const Landing = () => {
       return;
     }
 
-    if (!isConnected || !address) {
-      toast.error("Please connect your wallet first");
-      return;
-    }
-
-    if (!contract) {
-      toast.error("Please wait a few seconds.");
-      return;
-    }
-
-    console.log(name);
-    console.log(username);
-    console.log(address);
-
-
     try {
       setIsSubmitting(true);
-      // send transaction
+
       const tx = await contract.registerUser(name, username);
-      const receipt = await tx.wait(); // wait for blockchain confirmation
+      await tx.wait();
 
-      toast.success("Registration successful!");
-
-      // Log emitted events
-      receipt.events?.forEach((event) => {
-        if (event.event === "Registered") {
-          console.log("Registered event:", event.args);
-        //   event.args[0] -> address
-        //   event.args[1] -> username
-        //   event.args[2] -> name
-        }
-      });
-      
-      
-      
+      toast.success("Registration successful 🎉");
+      await fetchArtist();
       setShowModal(false);
       setName("");
       setUsername("");
+
     } catch (err) {
       console.error(err);
-      toast.error("Registration failed. Please try gain later");
+      toast.error("Registration failed");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCancel = () => {
-    setName("");
-    setUsername("");
-    setShowModal(false);
-  };
-
   return (
     <div className="bg-black min-h-screen">
       {/* NAVBAR */}
-      <nav className="bg-black sticky top-0 z-50">
-        <div className="mx-auto px-8 py-4 flex items-center justify-between">
+      <nav className="sticky top-0 z-50 bg-black">
+        <div className="flex justify-between items-center px-8 py-4">
           <h1 className="text-white tracking-wider">CURA</h1>
-          <div className="flex gap-4">
-            <ConnectButton label="Login" />
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-6 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
-            >
-              Sign up
-            </button>
-          </div>
+          <ConnectButton label="Login" />
         </div>
       </nav>
 
       {/* HERO */}
       <main className="relative overflow-hidden">
-        <div className="mx-auto px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 py-32">
-            {/* LEFT */}
+        <div className="px-8">
+          <div className="grid lg:grid-cols-2 gap-12 py-32">
             <div className="space-y-8 lg:pl-20 text-center lg:text-left">
-              <h2 className="text-white max-w-lg leading-tight text-5xl lg:text-6xl">
+              <h2 className="text-white text-5xl lg:text-6xl max-w-lg">
                 Bid, Buy and Own Exclusive Digital Art
               </h2>
               <p className="text-gray-400 max-w-md">
                 Discover a curated marketplace where creativity meets blockchain.
               </p>
-              <div className="flex gap-4 justify-center lg:justify-start">
-                <button className="px-8 py-3 bg-gray-700 rounded hover:bg-gray-600">
-                  Explore Gallery
-                </button>
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="px-8 py-3 border border-gray-700 rounded hover:bg-gray-700"
-                >
-                  Get Started
-                </button>
-              </div>
             </div>
 
-            {/* RIGHT COLLAGE */}
-            <div className="relative w-full h-[520px] -mt-10">
+            <div className="relative h-[520px]">
               {boxes.map((box, i) => (
                 <div
                   key={i}
-                  className="absolute overflow-hidden shadow-md rounded-xl"
+                  className="absolute rounded-xl overflow-hidden"
                   style={{
                     top: box.top,
                     left: box.left,
@@ -171,7 +144,6 @@ const Landing = () => {
                   <img
                     src={activeImages[i]}
                     className="w-full h-full object-cover"
-                    alt=""
                   />
                 </div>
               ))}
@@ -180,53 +152,37 @@ const Landing = () => {
         </div>
       </main>
 
-      {/* MODAL */}
+      {/* REGISTER MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm rounded-2xl bg-gray-900 p-6 shadow-xl animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-sm relative">
             <button
-              onClick={handleCancel}
-              className="absolute right-4 top-4 text-gray-400 hover:text-white"
+              onClick={() => setShowModal(false)}
+              className="absolute right-4 top-4 text-gray-400"
             >
-              <X size={20} />
+              <X />
             </button>
 
-            <h2 className="mb-6 text-2xl font-semibold text-gray-100 text-center">
-              Register
-            </h2>
+            <h2 className="text-white text-xl mb-6 text-center">Register</h2>
 
-            <div className="mb-4">
-              <label className="text-sm text-gray-400">Name</label>
-              <input
-                name="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your full name"
-              />
-            </div>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Name"
+              className="w-full mb-3 px-3 py-2 bg-gray-800 rounded text-white"
+            />
 
-            <div className="mb-6">
-              <label className="text-sm text-gray-400">Username</label>
-              <input
-                name="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your username"
-              />
-            </div>
-
-            <ConnectButton showBalance={false} />
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+              className="w-full mb-4 px-3 py-2 bg-gray-800 rounded text-white"
+            />
 
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting || !contract || !isConnected}
-              className={`w-full rounded-lg py-2 font-medium text-white mt-4 transition ${
-                !contract || !isConnected
-                  ? "bg-gray-600 cursor-not-allowed"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
+              disabled={isSubmitting}
+              className="w-full py-2 bg-indigo-600 rounded hover:bg-indigo-700"
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>

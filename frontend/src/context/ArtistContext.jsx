@@ -1,7 +1,7 @@
-import { useContext, createContext, useState, useEffect } from "react";
-import toast from "react-hot-toast";
-import { useAccount, useDisconnect } from "wagmi";
+import { createContext, useContext, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 import { ethers } from "ethers";
+
 import ContractAddress from "../lib/ContractAddress";
 import abi from "../lib/abi.json";
 
@@ -10,17 +10,18 @@ export const useArtistContext = () => useContext(ArtistContext);
 
 export const ArtistContextProvider = ({ children }) => {
   const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
 
   const [contract, setContract] = useState(null);
   const [artist, setArtist] = useState(null);
+  const [needsRegistration, setNeedsRegistration] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const initContract = async () => {
+    const init = async () => {
       if (!isConnected || !address) {
         setContract(null);
         setArtist(null);
+        setNeedsRegistration(false);
         return;
       }
 
@@ -32,26 +33,48 @@ export const ArtistContextProvider = ({ children }) => {
         const c = new ethers.Contract(ContractAddress, abi, signer);
         setContract(c);
 
-        // Fetch artist data
-        const artistData = await c.login();
+        const artistData = await c.login(); // throws if not registered
         setArtist(artistData);
+        setNeedsRegistration(false);
 
       } catch (err) {
-        console.log(err);
-        console.log("No account exists");
-        // disconnect();
+        console.log("User not registered");
         setArtist(null);
+        setNeedsRegistration(true);
       } finally {
         setIsLoading(false);
       }
     };
 
-    initContract();
-  }, [address, isConnected, disconnect]);
+    init();
+  }, [address, isConnected]);
+
+
+  const fetchArtist = async () => {
+  if (!contract) return;
+
+  try {
+    const artistData = await contract.login();
+    setArtist(artistData);
+    setNeedsRegistration(false);
+  } catch {
+    setArtist(null);
+    setNeedsRegistration(true);
+  }
+};
+
 
   return (
     <ArtistContext.Provider
-      value={{ isLoading, artist, isConnected, contract, address }}
+      value={{
+        contract,
+        artist,
+        address,
+        isConnected,
+        needsRegistration,
+        isLoading,
+        fetchArtist
+      }}
     >
       {children}
     </ArtistContext.Provider>
