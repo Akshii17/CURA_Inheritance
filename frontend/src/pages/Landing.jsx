@@ -25,7 +25,7 @@ const Landing = () => {
     artist,
     needsRegistration,
     isLoading,
-    fetchArtist
+    fetchArtist,
   } = useArtistContext();
 
   const images = [art1, art2, art3, art4, art5, art6, art7, art8, art9];
@@ -48,14 +48,17 @@ const Landing = () => {
   }, []);
 
   const loopImageChange = (index) => {
-    setTimeout(() => {
-      setActiveImages((prev) => {
-        const copy = [...prev];
-        copy[index] = randomImage();
-        return copy;
-      });
-      loopImageChange(index);
-    }, Math.random() * 8000 + 4000);
+    setTimeout(
+      () => {
+        setActiveImages((prev) => {
+          const copy = [...prev];
+          copy[index] = randomImage();
+          return copy;
+        });
+        loopImageChange(index);
+      },
+      Math.random() * 8000 + 4000,
+    );
   };
 
   // 🔥 AUTH FLOW CONTROL
@@ -64,7 +67,8 @@ const Landing = () => {
   useEffect(() => {
     if (!isConnected || isLoading) return;
 
-    if (artist) {   // this will redirect to home when login is done  
+    if (artist) {
+      // this will redirect to home when login is done
       setShowModal(false);
       navigate("/");
       return;
@@ -97,7 +101,6 @@ const Landing = () => {
       setShowModal(false);
       setName("");
       setUsername("");
-
     } catch (err) {
       console.error(err);
       toast.error("Registration failed");
@@ -112,7 +115,14 @@ const Landing = () => {
       <nav className="sticky top-0 z-50 bg-black">
         <div className="flex justify-between items-center px-8 py-4">
           <h1 className="text-white tracking-wider">CURA</h1>
-          <ConnectButton label="Login" />
+          <ConnectButton
+            chainStatus="none"
+            showBalance={false}
+            accountStatus={{
+              smallScreen: "avatar",
+              largeScreen: "full",
+            }}
+          />
         </div>
       </nav>
 
@@ -125,7 +135,8 @@ const Landing = () => {
                 Bid, Buy and Own Exclusive Digital Art
               </h2>
               <p className="text-gray-400 max-w-md">
-                Discover a curated marketplace where creativity meets blockchain.
+                Discover a curated marketplace where creativity meets
+                blockchain.
               </p>
             </div>
 

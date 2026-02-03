@@ -18,9 +18,6 @@ import Layout from "./Layout";
 import DirectSaleCheckout from "./pages/DirectSaleCheckout";
 import AuctionCheckout from "./pages/AuctionCheckout";
 import NotFound from "./pages/NotFound";
-
-
-
 import { useArtistContext } from "./context/ArtistContext";
 
 const App = () => {
@@ -36,7 +33,6 @@ const App = () => {
     </div>
   );
   }
-
 
 
   const router = createBrowserRouter(
