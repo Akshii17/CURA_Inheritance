@@ -242,6 +242,12 @@
 				"internalType": "string",
 				"name": "pfpHash",
 				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "followerCount",
+				"type": "uint256"
 			}
 		],
 		"name": "ArtistState",
@@ -357,12 +363,6 @@
 				"internalType": "address payable",
 				"name": "seller",
 				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "royaltyPer",
-				"type": "uint256"
 			}
 		],
 		"name": "DSState",
@@ -812,6 +812,11 @@
 				"internalType": "string",
 				"name": "pfpHash",
 				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "followers",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -1110,6 +1115,11 @@
 						"internalType": "string",
 						"name": "pfpHash",
 						"type": "string"
+					},
+					{
+						"internalType": "uint256",
+						"name": "followers",
+						"type": "uint256"
 					}
 				],
 				"internalType": "struct artAuction.Artist",
