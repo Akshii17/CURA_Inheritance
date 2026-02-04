@@ -165,8 +165,10 @@ const Landing = () => {
 
       {/* REGISTER MODAL */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-gray-900 p-6 rounded-2xl w-full max-w-sm relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs">
+          <div className="bg-black p-6 rounded-2xl w-full max-w-sm relative border border-neutral-900">
+
+
             <button
               onClick={() => setShowModal(false)}
               className="absolute right-4 top-4 text-gray-400"
@@ -174,32 +176,38 @@ const Landing = () => {
               <X />
             </button>
 
-            <h2 className="text-white text-xl mb-6 text-center">Register</h2>
 
+            <h2 className="text-white text-xl mb-6 text-center">Register your Account</h2>
+            <p className="mb-1"> Name </p>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
-              className="w-full mb-3 px-3 py-2 bg-gray-800 rounded text-white"
+              placeholder="Enter your name"
+              className="w-full mb-3 px-3 py-2 bg-black rounded text-white border border-0.1 border-neutral-500"
             />
 
+
+            <p className="mb-1"> Username </p>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Username"
-              className="w-full mb-4 px-3 py-2 bg-gray-800 rounded text-white"
+              placeholder="Enter your username"
+              className="w-full mb-4 px-3 py-2 bg-black rounded text-white border border-0.1 border-neutral-500"
             />
+
 
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full py-2 bg-indigo-600 rounded hover:bg-indigo-700"
+              className="w-full py-2 mt-2 bg-indigo-600 rounded hover:bg-indigo-700"
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
           </div>
         </div>
       )}
+
+
     </div>
   );
 };

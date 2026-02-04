@@ -269,7 +269,7 @@
 				"type": "string"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "address",
 				"name": "liker",
 				"type": "address"
@@ -518,6 +518,12 @@
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "artworkID",
+				"type": "uint256"
+			},
+			{
 				"indexed": false,
 				"internalType": "string",
 				"name": "artworkTitle",
@@ -554,7 +560,7 @@
 				"type": "bool"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "address",
 				"name": "originalArtist",
 				"type": "address"
@@ -579,7 +585,7 @@
 				"type": "uint256"
 			},
 			{
-				"indexed": true,
+				"indexed": false,
 				"internalType": "address payable",
 				"name": "seller",
 				"type": "address"
@@ -591,7 +597,7 @@
 				"type": "uint256"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "address",
 				"name": "winner",
 				"type": "address"
@@ -742,7 +748,7 @@
 				"type": "uint256"
 			},
 			{
-				"indexed": false,
+				"indexed": true,
 				"internalType": "address",
 				"name": "receiver",
 				"type": "address"
@@ -821,6 +827,11 @@
 		],
 		"name": "artworks",
 		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "artworkID",
+				"type": "uint256"
+			},
 			{
 				"internalType": "string",
 				"name": "artworkTitle",
