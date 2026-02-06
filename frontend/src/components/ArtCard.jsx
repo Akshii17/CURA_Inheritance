@@ -237,7 +237,7 @@ const ArtCard = ({ art, page }) => {
         <div className="flex justify-between" >
           <div className=" space-y-1">
 
-            <Link to = {`/artist/${art.id}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
+            <Link to = {`/artist/${art.artistId}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
   transition-all duration-300
   hover:decoration-gray-300 hover:text-gray-300">
               {art.artist}

@@ -25,7 +25,7 @@ const SampleArtData = [
     price: 2.4,
     currency: "ETH",
     currentBid: 2.9,
-    endDate: "2026-01-25T09:00:00Z",
+    endDate: "2026-02-25T09:00:00Z",
 
     genre: "fantasy",
     tags: ["fantasy", "sci-fi", "digital"],
@@ -93,7 +93,7 @@ const SampleArtData = [
     price: 3.2,
     currency: "ETH",
     currentBid: 3.8,
-    endDate: "2026-01-23T18:30:00Z",
+    endDate: "2026-02-23T18:30:00Z",
 
     genre: "abstract",
     tags: ["abstract", "modern"],
@@ -183,7 +183,7 @@ const SampleArtData = [
     price: 0.8, 
     currency: "ETH",
     currentBid: 3.9,
-    endDate: "2026-01-08T18:30:00Z",
+    endDate: "2026-02-08T18:30:00Z",
 
     genre: "character",
     tags: ["monochrome", "contrast", "lineart"],

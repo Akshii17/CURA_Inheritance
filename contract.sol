@@ -189,7 +189,7 @@ contract artAuction is ERC721 {
 
 
 
-    function LikeUnlike( uint _artWorkID) public returns (bool){
+    function LikeUnlike( uint _artWorkID) public){
         bool liked;
         Artist storage artist = artists[msg.sender];
         Artwork storage artwork = artworks[_artWorkID];
@@ -218,7 +218,6 @@ contract artAuction is ERC721 {
         artwork.nftMinted,
         artwork.originalArtist,
         artwork.available);
-        return liked;
     }
     event FollowUnFollowArtist(
         address indexed artist,
