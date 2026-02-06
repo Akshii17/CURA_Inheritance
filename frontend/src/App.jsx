@@ -20,6 +20,7 @@ import AuctionCheckout from "./pages/AuctionCheckout";
 import ArtistProfile from "./pages/ArtistProfile";
 import NotFound from "./pages/NotFound";
 import { useArtistContext } from "./context/ArtistContext";
+import Test from "./Test";
 
 const App = () => {
   const { artist, isConnected, isLoading } = useArtistContext();
@@ -53,6 +54,7 @@ const App = () => {
           path="auctioncheckout/:id"
           element={isAuthed ? <AuctionCheckout /> : <Navigate to="/join" />}
         />
+        <Route path="test" element={<Test/>} />
         <Route
           path="*"
           element={isAuthed ? <Navigate to="/" /> : <NotFound/>}
