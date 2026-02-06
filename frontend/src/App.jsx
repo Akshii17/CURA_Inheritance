@@ -17,6 +17,7 @@ import Landing from "./pages/Landing";
 import Layout from "./Layout";
 import DirectSaleCheckout from "./pages/DirectSaleCheckout";
 import AuctionCheckout from "./pages/AuctionCheckout";
+import ArtistProfile from "./pages/ArtistProfile";
 import NotFound from "./pages/NotFound";
 import { useArtistContext } from "./context/ArtistContext";
 
@@ -44,6 +45,7 @@ const App = () => {
         <Route path="studio" element={isAuthed ? <Studio /> : <Navigate to="/join" />}/>
         <Route path="analytics" element={isAuthed ? <Analytics /> : <Navigate to="/join" />}/>
         <Route path="profile" element={isAuthed ? <Profile /> : <Navigate to="/join" />}/>
+        <Route path="artist/:id" element={isAuthed ? <ArtistProfile /> : <Navigate to="/join" />}/>
         <Route path="art/:id" element={isAuthed ? <ArtPage /> : <Navigate to="/join" />}/>
         <Route path="directcheckout/:id" element={isAuthed ? <DirectSaleCheckout /> : <Navigate to="/join"/>}
         />

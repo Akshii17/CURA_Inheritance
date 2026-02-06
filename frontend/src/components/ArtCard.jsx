@@ -1,10 +1,16 @@
+
 import { ClockFading } from "lucide-react";
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useArtistContext } from "../context/ArtistContext";
+import Modal from "./Modal";
 
 const ArtCard = ({ art, page }) => {
+
+  const { contract, address, isConnected } = useArtistContext();
 
   const navigate = useNavigate();
 
@@ -17,6 +23,7 @@ const ArtCard = ({ art, page }) => {
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [tick, setTick] = useState(0);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (art.saleType !== "auction") return;
@@ -55,11 +62,29 @@ const ArtCard = ({ art, page }) => {
     return null;
   }
 
-  const handleFavoriteClick = (e) => {
+  const handleFavoriteClick = async(e) => {
     e.preventDefault();    // stops <Link>
     e.stopPropagation();  // stops bubbling
 
-    setIsFavorite((prev) => !prev);
+    try {
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+      console.log("liked", art.id);
+
+      const like = await contract.LikeUnlike( art.id );
+
+      await like.wait();
+
+     // for red heart...change this
+      setIsFavorite((prev) => !prev);
+
+    } catch (error) {
+      console.log("error in liking", error);
+      toast.error("Something went wrong, Please try again later");
+    }
+
   };
 
   const handleBuy = (e) => {
@@ -69,7 +94,9 @@ const ArtCard = ({ art, page }) => {
   };
 
   const handleSell = (e) => {
-    //open modal to sell
+    e.preventDefault();
+    e.stopPropagation();
+    setOpen(true);
   };
 
   const handleRemove = (e) => {
@@ -210,11 +237,11 @@ const ArtCard = ({ art, page }) => {
         <div className="flex justify-between" >
           <div className=" space-y-1">
 
-            <p className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
+            <Link to = {`/artist/${art.id}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
   transition-all duration-300
   hover:decoration-gray-300 hover:text-gray-300">
               {art.artist}
-            </p>
+            </Link>
 
             <p className="text-sm text-gray-300">
               {art.saleType === "auction" && <span className="text-gray-500">Current Bid: </span>}
@@ -226,7 +253,13 @@ const ArtCard = ({ art, page }) => {
           </button>}
         </div>
       </div>
+      <Modal
+    isOpen={open}
+    onClose={() => setOpen(false)}
+    id={art.id}
+  />
     </div>
+    
   );
 };
 

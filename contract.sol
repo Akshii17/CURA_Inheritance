@@ -1,3 +1,5 @@
+
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 //added events
@@ -27,6 +29,7 @@ contract artAuction is ERC721 {
         address payable artistAddress;
         string username;
         string pfpHash;
+        uint followers;
     }
     struct Auction {
         uint auctionID;
@@ -45,7 +48,7 @@ contract artAuction is ERC721 {
         uint artworkID;
         bool sold;
         address payable seller;    //current owner of the nft
-        uint royaltyPer;
+       
     }
     //General
     mapping(address => Artist) public artists;
@@ -81,7 +84,8 @@ contract artAuction is ERC721 {
         string name,
         address indexed artistAddress,
         string username,
-        string pfpHash
+        string pfpHash,
+        uint followerCount
     );
     function registerUser(
         string memory _name,
@@ -96,7 +100,8 @@ contract artAuction is ERC721 {
         emit ArtistState(artist.name,
         msg.sender,
         artist.username,
-        artist.pfpHash);
+        artist.pfpHash,
+        artist.followers);
     }
     function editDetails(
         string memory _newName,
@@ -117,12 +122,15 @@ contract artAuction is ERC721 {
         emit ArtistState(artist.name,
         msg.sender,
         artist.username,
-        artist.pfpHash);
+        artist.pfpHash,
+        artist.followers);
     }
     function login() public view returns (Artist memory) {
         require(isRegistered[msg.sender], "Not registered");
         return artists[msg.sender];
     }
+
+
 
 
     event artworkState(
@@ -169,6 +177,8 @@ contract artAuction is ERC721 {
     event ArtworkLiked(
 
 
+
+
         address indexed artist,
         uint indexed artWorkID,
         string name,
@@ -177,7 +187,9 @@ contract artAuction is ERC721 {
     );
 
 
-    function LikeUnlike( uint _artWorkID) public {
+
+
+    function LikeUnlike( uint _artWorkID) public returns (bool){
         bool liked;
         Artist storage artist = artists[msg.sender];
         Artwork storage artwork = artworks[_artWorkID];
@@ -186,11 +198,15 @@ contract artAuction is ERC721 {
         if (!hasLiked[_artWorkID][msg.sender]) {
             hasLiked[_artWorkID][msg.sender] = true;
             liked = true;
+            artwork.likes++;
         } else if (hasLiked[_artWorkID][msg.sender]) {
            // require(!hasLiked[_artWorkID][msg.sender]);
             hasLiked[_artWorkID][msg.sender] = false;
             liked = false;
+            artwork.likes-=1;
         }
+
+
         emit ArtworkLiked(artwork.originalArtist, _artWorkID, artist.name, msg.sender, liked);
         emit artworkState(
         artwork.artworkID,
@@ -202,6 +218,7 @@ contract artAuction is ERC721 {
         artwork.nftMinted,
         artwork.originalArtist,
         artwork.available);
+        return liked;
     }
     event FollowUnFollowArtist(
         address indexed artist,
@@ -214,12 +231,17 @@ contract artAuction is ERC721 {
         bool follow;
         require(isRegistered[msg.sender], "Please register to follow");
         require(msg.sender != _artistAddr, "Cannot follow yourself");
+        Artist storage artist = artists[_artistAddr];
         if (isFollowing[msg.sender][_artistAddr]) {
             isFollowing[msg.sender][_artistAddr] = false;
             follow = false;
+            artist.followers -= 1;
+
+
         } else if (!isFollowing[msg.sender][_artistAddr]) {
             isFollowing[msg.sender][_artistAddr] = true;
             follow = true;
+            artist.followers++;
         }
         emit FollowUnFollowArtist(
             _artistAddr,
@@ -306,6 +328,8 @@ contract artAuction is ERC721 {
         }
 
 
+
+
         if (artwork.originalArtist != auction.seller) {
             uint royaltyPercentage = artwork.royaltyP;
             uint royaltyAmt = (royaltyPercentage * auction.winningBid) / 100;
@@ -357,17 +381,16 @@ contract artAuction is ERC721 {
         uint price,
         uint indexed artworkID,
         bool sold,
-        address payable indexed seller,
-        uint royaltyPer);
+        address payable indexed seller);
     function createDS(uint _price, uint _artworkID) public {
        
         Artwork storage artwork = artworks[_artworkID];
         require(artwork.available == true, "Artwork cannot be put up for sale");
         if(!artwork.nftMinted){
-            require(msg.sender == artwork.originalArtist, "Auction can only be set by owner of artwork");
+            require(msg.sender == artwork.originalArtist, "Sale can only be set by owner of artwork");
         }
         else{
-        require(msg.sender == ownerOf(_artworkID), "Auction can only be set by owner of artwork");}
+        require(msg.sender == ownerOf(_artworkID), "Sale can only be set by owner of artwork");}
        
         DirectSaleCount++;
         DS storage directSale = directSales[DirectSaleCount];
@@ -377,7 +400,7 @@ contract artAuction is ERC721 {
         directSale.artworkID = _artworkID;
         directSale.sold = false;
         artwork.available=false;
-        emit DSState(directSale.directSaleID, directSale.price, directSale.artworkID, directSale.sold, directSale.seller, directSale.royaltyPer);
+        emit DSState(directSale.directSaleID, directSale.price, directSale.artworkID, directSale.sold, directSale.seller);
         emit artworkState(
         artwork.artworkID,
         artwork.artworkTitle,
@@ -391,12 +414,16 @@ contract artAuction is ERC721 {
     }
 
 
+
+
     function buyDSArtwork(uint DSid) public payable {
         require(isRegistered[msg.sender], "Please register to buy artwork");
         DS storage directSale = directSales[DSid];
         Artwork storage artwork = artworks[directSale.artworkID];
         require(!directSale.sold , "This artwork has already been sold");
         require(msg.value == directSale.price, "Price is incorrect");
+
+
 
 
         if (directSale.seller == artwork.originalArtist) {    //First time sale, current owner = originalArtist
@@ -422,7 +449,7 @@ contract artAuction is ERC721 {
             artwork.available = true;
         }
         artwork.available = true;
-         emit DSState(directSale.directSaleID, directSale.price, directSale.artworkID, directSale.sold, directSale.seller, directSale.royaltyPer);
+         emit DSState(directSale.directSaleID, directSale.price, directSale.artworkID, directSale.sold, directSale.seller);
          emit artworkState(
         artwork.artworkID,
         artwork.artworkTitle,
@@ -441,7 +468,7 @@ contract artAuction is ERC721 {
         directSale.sold = true;
         Artwork storage artwork = artworks[directSale.artworkID];
         artwork.available = true;
-         emit DSState(directSale.directSaleID, directSale.price, directSale.artworkID, directSale.sold, directSale.seller, directSale.royaltyPer);
+         emit DSState(directSale.directSaleID, directSale.price, directSale.artworkID, directSale.sold, directSale.seller);
          emit artworkState(
         artwork.artworkID,
         artwork.artworkTitle,
@@ -454,6 +481,12 @@ contract artAuction is ERC721 {
         artwork.available);
     }
 }
+
+
+
+
+
+
 
 
 

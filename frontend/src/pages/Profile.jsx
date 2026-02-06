@@ -78,7 +78,7 @@ const Profile = () => {
       );
 
       await tx.wait();
-      toast.success("Artwork created successfully 🎉");
+      toast.success("Artwork created successfully");
 
       // Reset state
       setShowCreateModal(false);
