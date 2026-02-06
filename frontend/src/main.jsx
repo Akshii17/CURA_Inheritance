@@ -5,6 +5,8 @@ import "./index.css";
 import { WagmiProvider } from "wagmi";
 import { http } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ApolloProvider } from "@apollo/client/react";
+import apolloClient from "./lib/apolloClient";
 
 import "@rainbow-me/rainbowkit/styles.css";
 import {
@@ -34,6 +36,7 @@ const chains = [sepolia];
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <WagmiProvider config={config}>
+      <ApolloProvider client={apolloClient}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
           chains={chains}
@@ -43,6 +46,7 @@ createRoot(document.getElementById("root")).render(
           </ArtistContextProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
+      </ApolloProvider>
     </WagmiProvider>
   </StrictMode>,
 );
