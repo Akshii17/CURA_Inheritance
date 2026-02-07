@@ -42,28 +42,28 @@ const AuctionCheckout = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f14] to-[#14141c] text-white px-4 py-10">
-      <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10">
+    
+    <div className="min-h-screen w-full bg-gradient-to-b from-[#0f0f14] to-[#14141c] text-white flex items-center justify-center p-6">
+      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-center">
 
-        {/* LEFT – ART PREVIEW */}
-        <div className="space-y-6">
-          <div className="relative w-72 mx-auto">
+        <div className="space-y-6 flex flex-col items-center">
+          <div className="relative w-full max-w-md aspect-square">
             <img
               src={art.image}
               alt={art.title}
-              className="rounded-xl shadow-lg w-full h-72 object-cover"
+              className="rounded-xl shadow-lg w-full h-full object-cover"
             />
-            <span className="absolute top-3 left-3 bg-amber-400 text-black text-xs font-semibold px-3 py-1 rounded-full">
+
+            <span className="absolute top-4 left-4 bg-[#5D4037] text-[#F3E5AB] text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg">
               Auction
             </span>
           </div>
 
           <div className="text-center">
-            <h1 className="text-2xl font-bold">{art.title}</h1>
+            <h1 className="text-3xl font-bold text-[#F3E5AB]">{art.title}</h1>
             <p className="text-gray-400">by {art.artist}</p>
           </div>
 
-          {/* TIMER */}
           <div className="flex justify-center gap-4">
             {time ? (
               Object.entries(time).map(([label, value]) => (
@@ -81,10 +81,9 @@ const AuctionCheckout = () => {
           </div>
         </div>
 
-        {/* RIGHT – BID PANEL */}
-        <div className="bg-white/5 rounded-2xl p-6 space-y-6 backdrop-blur">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <Gavel size={18} /> Place Your Bid
+        <div className="bg-white/5 rounded-2xl p-8 space-y-6 backdrop-blur">
+          <h2 className="text-2xl font-semibold text-[#F3E5AB]">
+            Place Your Bid
           </h2>
 
           <div className="space-y-2 text-sm">
@@ -113,12 +112,13 @@ const AuctionCheckout = () => {
             <div className="flex items-center gap-2 text-amber-400 mb-2">
               <Clock size={16} /> Auction Notice
             </div>
-            <p>Highest bid wins once the timer ends.</p>
+            <p>Clock's ticking! The top bid secures the win.</p>
           </div>
 
+  
           <button
             onClick={handlePlaceBid}
-            className="w-full bg-amber-500 hover:bg-amber-600 transition text-black font-semibold py-4 rounded-2xl shadow-lg cursor-pointer"
+            className="w-full bg-[#5D4037] hover:opacity-90 transition text-[#F3E5AB] font-bold py-5 rounded-2xl shadow-lg cursor-pointer uppercase tracking-wider"
           >
             Place Bid
           </button>

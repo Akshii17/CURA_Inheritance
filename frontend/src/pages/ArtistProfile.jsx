@@ -5,6 +5,7 @@ import { User, MapPin, Link as LinkIcon, Calendar } from 'lucide-react';
 import SampleArtistData from '../constants/SampleArtistData';
 import { useArtistContext } from "../context/ArtistContext";
 import toast from 'react-hot-toast';
+import { ethers } from "ethers";
 
 
 const ArtistProfile = () => {
@@ -52,15 +53,17 @@ const ArtistProfile = () => {
 
     const isActive = (path) => location.pathname === path;
 
-    try {
-        const checksumAddress = ethers.getAddress(artistData.address);
-        console.log(checksumAddress);
-    } catch (error) {
-        console.error("Invalid address");
-        toast.error("Something went wrong, Please try again later")
-    }
 
     const handleFollow = async () => {
+        let checksumAddress;
+
+        try {
+            checksumAddress = ethers.getAddress(artistData.address);
+            console.log(checksumAddress);
+        } catch (error) {
+            console.error("Invalid address");
+            toast.error("Something went wrong, Please try again later")
+        }
         try {
             if (!isConnected || !address || !contract) {
                 return;
