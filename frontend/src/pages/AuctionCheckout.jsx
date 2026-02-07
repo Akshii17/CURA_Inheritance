@@ -14,6 +14,11 @@ const AuctionCheckout = () => {
   const [tick, setTick] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
 
+  const [finalSaleChecked, setFinalSaleChecked] = useState(false);
+  const [ownershipChecked, setOwnershipChecked] = useState(false);
+
+  const canPay = finalSaleChecked && ownershipChecked;
+
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t + 1), 1000);
     return () => clearInterval(interval);
@@ -43,20 +48,16 @@ const AuctionCheckout = () => {
 
   return (
     
-    <div className="min-h-screen w-full bg-gradient-to-b from-[#0f0f14] to-[#14141c] text-white flex items-center justify-center p-6">
-      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-center">
+    <div className=" w-full text-white flex justify-center px-6 py-3 items-center">
+      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-stretch">
 
-        <div className="space-y-6 flex flex-col items-center">
+        <div className="space-y-6 flex flex-col items-center h-full">
           <div className="relative w-full max-w-md aspect-square">
             <img
               src={art.image}
               alt={art.title}
               className="rounded-xl shadow-lg w-full h-full object-cover"
             />
-
-            <span className="absolute top-4 left-4 bg-[#5D4037] text-[#F3E5AB] text-sm font-semibold px-4 py-1.5 rounded-full shadow-lg">
-              Auction
-            </span>
           </div>
 
           <div className="text-center">
@@ -81,26 +82,29 @@ const AuctionCheckout = () => {
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-2xl p-8 space-y-6 backdrop-blur">
+        <div className="bg-white/5 rounded-2xl p-8 space-y-6 backdrop-blur flex flex-col h-full">
           <h2 className="text-2xl font-semibold text-[#F3E5AB]">
             Place Your Bid
           </h2>
 
-          <div className="space-y-2 text-sm">
+          <div className="space-y-2 text-md">
+            <div className="flex justify-between">
+              <span>Number of Bids</span>
+              <span>17 </span>
+            </div>
             <div className="flex justify-between">
               <span>Current Bid</span>
               <span>{art.price} {art.currency}</span>
             </div>
             <div className="flex justify-between text-gray-400">
               <span>Minimum Increment</span>
-              <span>{art.minIncrement} {art.currency}</span>
+              <span>0.0006 ETH</span>
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm text-gray-400">Your Bid</label>
+            <p className="text-sm mb-2">Your Bid</p>
             <input
-              type="number"
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
               placeholder={`Enter at least ${art.price + art.minIncrement}`}
@@ -110,17 +114,49 @@ const AuctionCheckout = () => {
 
           <div className="bg-black/40 rounded-xl p-4 text-sm">
             <div className="flex items-center gap-2 text-amber-400 mb-2">
-              <Clock size={16} /> Auction Notice
+              <Clock size={16} /> Auction Rules
             </div>
-            <p>Clock's ticking! The top bid secures the win.</p>
+            <p>• Each bid must meet the minimum increment</p>
+            <p>• If outbid, you must collect your funds from the withdraw section in your profile</p>
+            <p>• Clock's ticking! The top bid secures the win</p>
+          </div>
+
+          <div className="space-y-3 text-sm">
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={finalSaleChecked}
+                onChange={(e) => setFinalSaleChecked(e.target.checked)}
+                className="mt-1 accent-indigo-800"
+              />
+              <span>
+                I understand that bids cannot be withdrawn until the auction ends
+              </span>
+            </label>
+
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={ownershipChecked}
+                onChange={(e) => setOwnershipChecked(e.target.checked)}
+                className="mt-1 accent-indigo-800"
+              />
+              <span>Ownership is transferred to the winner</span>
+            </label>
           </div>
 
   
           <button
-            onClick={handlePlaceBid}
-            className="w-full bg-[#5D4037] hover:opacity-90 transition text-[#F3E5AB] font-bold py-5 rounded-2xl shadow-lg cursor-pointer uppercase tracking-wider"
+            disabled={!canPay}
+            //onClick={}
+            className={`mt-auto w-full bg-indigo-600 hover:bg-indigo-800 text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
+              ${
+                canPay
+                  ? "hover:opacity-90 cursor-pointer"
+                  : "opacity-30 cursor-not-allowed"
+              }`}
           >
-            Place Bid
+            Confirm & Bid __ ETH
           </button>
         </div>
       </div>

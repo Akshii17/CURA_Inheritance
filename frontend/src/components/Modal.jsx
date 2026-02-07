@@ -120,6 +120,7 @@ const Modal = ({ isOpen, onClose, id }) => {
               value="auction"
               checked={saleType === "auction"}
               onChange={() => setSaleType("auction")}
+              className="accent-indigo-800"
             />
             Auction
           </label>
@@ -131,6 +132,7 @@ const Modal = ({ isOpen, onClose, id }) => {
               value="direct"
               checked={saleType === "direct"}
               onChange={() => setSaleType("direct")}
+              className="accent-indigo-800"
             />
             Direct Sale
           </label>
@@ -184,7 +186,7 @@ const Modal = ({ isOpen, onClose, id }) => {
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-lg bg-[#5d001e] px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
           >
             {isLoading ? "Creating..." : "Create"}
           </button>

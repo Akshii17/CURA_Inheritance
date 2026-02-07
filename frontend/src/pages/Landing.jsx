@@ -96,7 +96,7 @@ const Landing = () => {
       const tx = await contract.registerUser(name, username);
       await tx.wait();
 
-      toast.success("Registration successful 🎉");
+      toast.success("Registration successful");
       await fetchArtist();
       setShowModal(false);
       setName("");
