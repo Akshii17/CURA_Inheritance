@@ -2,10 +2,18 @@ import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Lock } from "lucide-react";
 import SampleArtData from "../constants/SampleArtData";
+import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
 
 const DirectSaleCheckout = () => {
+
+  const { contract, address, isConnected } = useArtistContext();
+  const { DS } = useQueryContext();
+
   const { id } = useParams();
   const art = SampleArtData.find((a) => a.id === Number(id));
+
+  let DSid = DS.directSaleID;
 
   if (!art) {
     return <div className="text-white p-10">Artwork not found</div>;
@@ -22,35 +30,28 @@ const DirectSaleCheckout = () => {
 
   const [finalSaleChecked, setFinalSaleChecked] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
 
   const totalETH = artwork.priceETH + artwork.gasETH;
   const canPay = finalSaleChecked && ownershipChecked;
 
   const handlePay = async() => {
     try {
+      setIsLoading(true);
       if (!isConnected || !address || !contract) {
         return;
       }
 
       console.log();
 
-      const tx = await contract.buyDSArtwork(
-        title,
-        ipfsHash,
-        description,
-        royalty,
-      );
+      const tx = await contract.buyDSArtwork(DSid);
 
       await tx.wait();
-      toast.success("Artwork created successfully");
+      toast.success("Artwork purchased");
 
       // Reset state
-      setShowCreateModal(false);
-      setDescription("");
-      setTitle("");
-      setRoyaltyP("");
-      setImage(null);
-      setImagePreview(null);
+      //show
       setIsLoading(false);
     } catch (error) {
       console.log("error in createArtwork", error);

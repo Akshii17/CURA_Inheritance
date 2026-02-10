@@ -35,9 +35,17 @@ export const GET_ARTWORKS = gql`
   }
 `;
 
-
-
-
-
-
-
+export const GET_DS = gql`
+  query MyQuery($id: BigInt!) {
+    dsstates(where: { directSaleID: $id }) {
+      artworkID
+      directSaleID
+      price
+      seller
+      sold
+      blockNumber
+      blockTimestamp
+      id
+    }
+  }
+`;

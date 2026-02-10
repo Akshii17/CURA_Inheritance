@@ -17,6 +17,7 @@ export const QueryContextProvider = ({ children }) => {
 
     // artworks
     const [artworks, setArtworks] = useState([]);
+    const [DS, setDS] = useState([]);
     const [auction, setAuction] = useState([]);
     const [direct, setDirect] = useState([]);
     const [error, setError] = useState(null);
@@ -37,15 +38,32 @@ export const QueryContextProvider = ({ children }) => {
     }, []);
 
 
+        const fetchDS = async () => {
+        try {
+            const data = await request(GRAPHQL_ENDPOINT, GET_DS);
+            setDS(data.dsstates);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchDS();
+    }, []);
+
+
     return (
   <QueryContext.Provider
     value={{
       artworks,
       error,
+      DS,
 
 
       fetchArtworks,
       setArtworks,
+      fetchDS,
     }}
   >
     {children}
