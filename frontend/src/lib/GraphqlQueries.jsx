@@ -1,8 +1,9 @@
 import { gql } from "@apollo/client";
 
+
 export const GET_ARTISTS = gql`
   query GetArtists {
-    artistStates(first: 5) {
+    artistStates {
       artistAddress
       followerCount
       id
@@ -15,5 +16,28 @@ export const GET_ARTISTS = gql`
     }
   }
 `;
+
+
+export const GET_ARTWORKS = gql`
+  query GetArtworks {
+    artworkStates {
+      artworkID
+      artworkTitle
+      available
+      description
+      id
+      ipfsHash
+      likes
+      nftMinted
+      originalArtist
+      royaltyP
+    }
+  }
+`;
+
+
+
+
+
 
 

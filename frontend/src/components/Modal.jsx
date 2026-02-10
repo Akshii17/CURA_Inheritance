@@ -10,6 +10,7 @@ const Modal = ({ isOpen, onClose, id }) => {
   const [basePrice, setBasePrice] = useState("");
   const [endDate, setEndDate] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false)
 
   if (!isOpen) return null;
 
@@ -52,11 +53,12 @@ const Modal = ({ isOpen, onClose, id }) => {
 
   const createDS = async (price, id) => {
     try {
+      setIsLoading(true);
       if (!isConnected || !address || !contract) {
         return;
       }
 
-      //console.log(duration);
+      console.log(duration);
 
       const sellds = await contract.createDS(
         price, id
@@ -66,7 +68,7 @@ const Modal = ({ isOpen, onClose, id }) => {
       toast.success("Direct Sale created successfully");
 
       // Reset state
-      isOpen(false);
+      onClose();
       setPrice("");
       setBasePrice("");
       setIsLoading(false);
@@ -79,6 +81,7 @@ const Modal = ({ isOpen, onClose, id }) => {
 
   const createAuction = async (id, basePrice, duration) => {
     try {
+      setIsLoading(true);
       if (!isConnected || !address || !contract) {
         return;
       }
@@ -93,7 +96,7 @@ const Modal = ({ isOpen, onClose, id }) => {
       toast.success("Auction created successfully");
 
       // Reset state
-      isOpen(false);
+      setOpen(false);
       setPrice("");
       setBasePrice("");
       setIsLoading(false);
@@ -120,7 +123,7 @@ const Modal = ({ isOpen, onClose, id }) => {
               value="auction"
               checked={saleType === "auction"}
               onChange={() => setSaleType("auction")}
-              className="accent-indigo-800"
+              className="accent-[#7C3AED]"
             />
             Auction
           </label>
@@ -132,7 +135,7 @@ const Modal = ({ isOpen, onClose, id }) => {
               value="direct"
               checked={saleType === "direct"}
               onChange={() => setSaleType("direct")}
-              className="accent-indigo-800"
+              className="accent-[#7C3AED]"
             />
             Direct Sale
           </label>
@@ -178,7 +181,7 @@ const Modal = ({ isOpen, onClose, id }) => {
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-100"
+            className="rounded-lg px-4 py-2 text-gray-600 hover:bg-gray-200"
           >
             Cancel
           </button>
@@ -186,7 +189,7 @@ const Modal = ({ isOpen, onClose, id }) => {
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="rounded-lg bg-[#5d001e] px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="rounded-lg bg-[#7c3aed] text-[#F3E5AB] px-4 py-2 hover:bg-[#5f2db7] disabled:opacity-50 cursor-pointer"
           >
             {isLoading ? "Creating..." : "Create"}
           </button>

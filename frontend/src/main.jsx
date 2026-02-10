@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ApolloProvider } from "@apollo/client/react";
 import apolloClient from "./lib/apolloClient";
 
+
 import "@rainbow-me/rainbowkit/styles.css";
 import {
   getDefaultConfig,
@@ -16,8 +17,11 @@ import {
 } from "@rainbow-me/rainbowkit";
 import { sepolia } from "wagmi/chains";
 import { ArtistContextProvider } from "./context/ArtistContext.jsx";
+import { QueryContextProvider } from "./context/QueryContext.jsx";
+
 
 const queryClient = new QueryClient();
+
 
 const config = getDefaultConfig({
   appName: "cura",
@@ -28,9 +32,12 @@ const config = getDefaultConfig({
   transports: {
     [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/PHX4a063CZKRHksCdw8ao"),
 
+
   }
 });
 const chains = [sepolia];
+
+
 
 
 createRoot(document.getElementById("root")).render(
@@ -42,7 +49,9 @@ createRoot(document.getElementById("root")).render(
           chains={chains}
         >
           <ArtistContextProvider>
-          <App />
+            <QueryContextProvider>
+                <App />
+            </QueryContextProvider>
           </ArtistContextProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
@@ -50,3 +59,6 @@ createRoot(document.getElementById("root")).render(
     </WagmiProvider>
   </StrictMode>,
 );
+
+
+

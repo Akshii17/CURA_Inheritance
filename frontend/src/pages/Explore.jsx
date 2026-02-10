@@ -1,21 +1,30 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { X } from "lucide-react";
 import { MoveUp } from "lucide-react"
 import { MoveDown } from "lucide-react"
 import ArtGrid from "../components/ArtGrid";
-import sampleArtData from "../constants/SampleArtData";
+import { useQueryContext } from "../context/QueryContext";
+import { useArtistContext } from "../context/ArtistContext";
 
 
 const Explore = () => {
-  const [saleType, setSaleType] = useState(null); 
+
+  const { artworks, fetchArtworks, contract } = useQueryContext();
+  const { artist, fetchArtist } = useArtistContext();
+
+  const [saleType, setSaleType] = useState(null);
   const [genre, setGenre] = useState("all");
   const [sortBy, setSortBy] = useState("new");
   const [searchQuery, setSearchQuery] = useState("");
   const SALE_TYPES = ["auction", "direct"];
 
+  let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
-  const filteredArtData = sampleArtData.filter((art) => {
+
+
+
+  const filteredArtData = artworks.filter((art) => {
     if (saleType && art.saleType !== saleType) {
       return false;
     }
@@ -60,6 +69,10 @@ const Explore = () => {
   });
 
 
+
+
+
+
   return (
 
     <div className="min-h-screen px-10 py-6 text-white">
@@ -98,7 +111,7 @@ const Explore = () => {
 
       {/*Filters*/}
       <div className="mt-6 flex flex-wrap items-center gap-4">
-      
+
         {/* Sale Type Pills */}
         <div className="flex gap-2">
           {SALE_TYPES.map((type) => (
@@ -109,20 +122,19 @@ const Explore = () => {
                 flex items-center gap-2
                 px-4 py-2 rounded-full text-sm capitalize
                 border transition cursor-pointer
-                ${
-                  saleType === type
-                    ? "border-white text-white"
-                    : "border-neutral-800 text-gray-500 hover:border-neutral-600"
+                ${saleType === type
+                  ? "border-white text-white"
+                  : "border-neutral-800 text-gray-500 hover:border-neutral-600"
                 }
               `}
             >
               {type}
 
               {saleType === type && (
-              <X
+                <X
                   size={14}
                   className="opacity-70 hover:opacity-100"
-              />
+                />
               )}
             </button>
           ))}
@@ -151,28 +163,28 @@ const Explore = () => {
         <div className="ml-auto flex items-center gap-2">
           <p className="text-sm text-gray-400">Sort by:</p>
           <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="
               bg-black border border-neutral-800
               px-4 py-2 rounded-md text-sm
               text-gray-300 focus:outline-none
               "
           >
-              <option value="new">New Arrivals</option>
-              <option value="low">Price ↑ </option>
-              <option value="high">Price ↓ </option>
+            <option value="new">New Arrivals</option>
+            <option value="low">Price ↑ </option>
+            <option value="high">Price ↓ </option>
 
-              {saleType === "auction" && (
+            {saleType === "auction" && (
               <option value="ending">Ending Soon</option>
-              )}
+            )}
           </select>
         </div>
       </div>
 
       <ArtGrid
-      artworks={sortedFilteredArtData} page="explore"
-    />
+        artworks={sortedFilteredArtData} page="explore"
+      />
     </div>
   );
 };

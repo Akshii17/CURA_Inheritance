@@ -3,18 +3,18 @@ import { useState } from 'react';
 import { useRef } from "react";
 import { X } from "lucide-react"
 import ArtGrid from "../components/ArtGrid";
-import SampleArtData from "../constants/SampleArtData";
+import { useQueryContext } from '../context/QueryContext';
+import { useArtistContext } from '../context/ArtistContext';
 
 
 
 const Studio = () => {
 
-  const mockAuthUser = {
-    userId: 2,
-    username: "N. Verma",
-  };
+ 
+  const { artist, fetchArtist } = useArtistContext();
+  const { artworks, fetchArtworks } = useQueryContext();
 
-  const loggedInUser = mockAuthUser;
+  const loggedArtistAddress = artist?.artistAddress.toLowerCase();
 
   const [activeTab, setActiveTab] = useState(0);
   const prevTab = useRef(activeTab);
@@ -23,24 +23,24 @@ const Studio = () => {
   const [status, setStatus] = useState(null);
 
   //Art in Your Art
-  const myArt = SampleArtData.filter(
-    (art) => art.artistId === loggedInUser.userId
+  const myArt = artworks.filter(
+    (art) => art?.originalArtist.toLowerCase() === loggedArtistAddress
   );
 
   //filters in Your Art
   const filteredArt = myArt.filter((art) => {
     if (!status) return true;     
-    return art.status === status;
+    return art.status === status; // ??????????????????????????
   });
 
   //Art in Purchased
-  const purchasedArt = SampleArtData.filter(
-    art => art.purchasedBy?.includes(loggedInUser.userId)
+  const purchasedArt = artworks.filter(
+    art => art.currentOwner?.includes(loggedArtistAddress) // add currentOwner in smart contract
   );
 
   //Art in Favorites
-  const likedArt = SampleArtData.filter(
-    art => art.likedBy?.includes(loggedInUser.userId)
+  const likedArt = artworks.filter(
+    art => art.likedBy?.includes(loggedArtistAddress) // ?????????????????????????????????
   );
 
   //filters in Favorites
@@ -135,12 +135,12 @@ const Studio = () => {
 
           {/* ART RESULTS / EMPTY STATE */}
           <div className="mt-6">
-            {filteredArt.length === 0 ? (
+            {filteredArt.length === 10 ? (
               <p className="text-gray-500 text-lg text-center mt-10">
                 No artworks yet
               </p>
             ) : (
-              <ArtGrid artworks={filteredArt} />
+              <ArtGrid artworks={myArt} />
             )}
           </div>
         </div>

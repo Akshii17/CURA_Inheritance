@@ -26,8 +26,37 @@ const DirectSaleCheckout = () => {
   const totalETH = artwork.priceETH + artwork.gasETH;
   const canPay = finalSaleChecked && ownershipChecked;
 
-  const handlePay = () => {
-    console.log("Paying for:", artwork);
+  const handlePay = async() => {
+    try {
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+      console.log();
+
+      const tx = await contract.buyDSArtwork(
+        title,
+        ipfsHash,
+        description,
+        royalty,
+      );
+
+      await tx.wait();
+      toast.success("Artwork created successfully");
+
+      // Reset state
+      setShowCreateModal(false);
+      setDescription("");
+      setTitle("");
+      setRoyaltyP("");
+      setImage(null);
+      setImagePreview(null);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error in createArtwork", error);
+      toast.error("Something went wrong, Please try again later");
+      setIsLoading(false);
+    }
   };
 
   return (

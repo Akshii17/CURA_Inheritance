@@ -6,24 +6,20 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useArtistContext } from "../context/ArtistContext";
-import Modal from "./Modal";
+
 
 const ArtCard = ({ art, page }) => {
 
-  const { contract, address, isConnected } = useArtistContext();
+  const { contract, address, isConnected, artist, fetchArtist } = useArtistContext();
 
   const navigate = useNavigate();
 
-  const mockAuthUser = {
-    userId: 2,
-    username: "N. Verma",
-  };
+  let loggedArtistAddress = artist.artistAddress.toLowerCase();
 
-  const loggedInUser = mockAuthUser;
 
   const [isFavorite, setIsFavorite] = useState(false);
   const [tick, setTick] = useState(0);
-  const [open, setOpen] = useState(false);
+  
 
   useEffect(() => {
     if (art.saleType !== "auction") return;
@@ -71,9 +67,9 @@ const ArtCard = ({ art, page }) => {
         return;
       }
 
-      console.log("liked", art.id);
+      console.log("liked", art.artworkID);
 
-      const like = await contract.LikeUnlike( art.id );
+      const like = await contract.LikeUnlike( art.artworkID );
 
       await like.wait();
 
@@ -90,7 +86,7 @@ const ArtCard = ({ art, page }) => {
   const handleBuy = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(`/directcheckout/${art.id}`);
+    navigate(`/directcheckout/${art.ArtworkID}`);
   };
 
   const handleSell = (e) => {
@@ -113,44 +109,12 @@ const ArtCard = ({ art, page }) => {
     navigate(`/auctioncheckout/${art.id}`);
   };
 
-  const getButtonConfig = ({ saleType, status, artistId, userId }) => {
-    // UNSOLD → Sell
-    if (status === "Unsold") {
-      return { label: "Sell", action: handleSell };
-    }
 
-    // DIRECT SALE
-    if (saleType === "direct") {
-      if (artistId === userId) {
-        return { label: "End Sale", action: handleRemove };
-      }
-      return { label: "Buy Now", action: handleBuy };
-    }
-
-    // AUCTION
-    if (saleType === "auction") {
-      if (artistId === userId) {
-        return { label: "End Auction", action: handleEndAuction };
-      }
-      return { label: "Place Bid", action: handlePlaceBid };
-    }
-
-    return null;
-  };
-
-  const buttonConfig = getButtonConfig({
-    saleType: art.saleType,
-    status: art.status,
-    artistId: art.artistId,
-    userId: loggedInUser.userId,
-  });
-
-  if (!buttonConfig) return null;
 
   return (
     <div className="block group">
       {/* Image */}
-      <Link to={`/art/${art.id}`}>
+      <Link to={`/art/${art.artworkID}`}>
         <div className="relative overflow-hidden rounded-lg bg-neutral-900 cursor-pointer">
           {/*Likes*/}
           <button
@@ -174,7 +138,7 @@ const ArtCard = ({ art, page }) => {
             />
           </button>
 
-          <img src={art.image} alt={art.title} className=" w-full h-72 object-cover transition-transform duration-300 hover:scale-105 " />
+          <img key={art.id} src={`https://gateway.pinata.cloud/ipfs/${art.ipfsHash}`} alt={art.artworkTitle} className=" w-full h-72 object-cover transition-transform duration-300 hover:scale-105 " />
 
           {/* Sale Type Badge */}
           <span
@@ -232,7 +196,7 @@ const ArtCard = ({ art, page }) => {
       {/* Info */}
       <div>
         <h3 className=" mt-2 font-serif text-lg text-white">
-          {art.title}
+          {art.artworkTitle}
         </h3>
         <div className="flex justify-between" >
           <div className=" space-y-1">
@@ -240,24 +204,17 @@ const ArtCard = ({ art, page }) => {
             <Link to = {`/artist/${art.artistId}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
   transition-all duration-300
   hover:decoration-gray-300 hover:text-gray-300">
-              {art.artist}
+              {art.originalArtist} {/*fetch his nameeee??????????????*/}
             </Link>
 
             <p className="text-sm text-gray-300">
-              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: </span>}
-              {art.price} {art.currency}
+              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auction.winningBid} </span>}
+              {art.saleType === "auction" && <span className="text-gray-500">Price: {DS.price} </span>}
+              {"ETH"}
             </p>
           </div>
-          {page !== "explore" && <button onClick={buttonConfig.action} className="bg-neutral-700 h-8 w-20 mt-3 text-sm rounded-md cursor-pointer hover:bg-red-600 transition duration-300">
-            {buttonConfig.label}
-          </button>}
         </div>
       </div>
-      <Modal
-    isOpen={open}
-    onClose={() => setOpen(false)}
-    id={art.id}
-  />
     </div>
     
   );

@@ -266,9 +266,9 @@ function Hero() {
           </p>
           
           <div className="flex gap-4 justify-center items-center mb-10">
-            <button className="bg-white text-black border-none py-3.5 px-8 rounded-xl text-sm flex items-center gap-2 shadow-[0_8px_30px_rgba(0,0,0,0.6)] relative z-20 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]">
+            <Link to = "/testing" className="bg-white text-black border-none py-3.5 px-8 rounded-xl text-sm flex items-center gap-2 shadow-[0_8px_30px_rgba(0,0,0,0.6)] relative z-20 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(255,255,255,0.15)]">
               How it works <ArrowRight size={16} />
-            </button>
+            </Link>
           </div>
         </div>
       </div>

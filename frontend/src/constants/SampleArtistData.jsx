@@ -27,7 +27,7 @@ const SampleArtistData = [
     joined: 'Joined Jan 2026',
     profileImage: null,
     coverImage: 'https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg',
-    address: "0x266F8c80213489b2720c11215643BA912D238AD8",
+    address: "0x5cc1A09f6CfE113e265a88fbA2Bd69C8a0b69ECA",
   },
   {
     artistId:1,

@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
+
 import Home from "./pages/Home";
 import Explore from "./pages/Explore";
 import Studio from "./pages/Studio";
@@ -21,12 +22,16 @@ import ArtistProfile from "./pages/ArtistProfile";
 import NotFound from "./pages/NotFound";
 import { useArtistContext } from "./context/ArtistContext";
 import Test from "./Test";
+import Testing from "./pages/Testing";
+
 
 const App = () => {
   const { artist, isConnected, isLoading } = useArtistContext();
 
+
   const isAuthed = isConnected && artist;
   console.log("isAuthed",isAuthed);
+
 
   if (isLoading) {
   return (
@@ -37,12 +42,17 @@ const App = () => {
   }
 
 
+
+
   const router = createBrowserRouter(
     createRoutesFromElements(
       <Route path="/" element={<Layout />}>
         <Route path="" element={isAuthed ? <Home /> : <Navigate to="/join" />} />
         <Route path="join" element={!isAuthed ? <Landing /> : <Navigate to="/" />} />
         <Route path="explore" element={isAuthed ? <Explore /> : <Navigate to="/join" />}/>
+        <Route path="testing" element={isAuthed ? <Testing /> : <Navigate to="/join" />}/>
+
+
         <Route path="studio" element={isAuthed ? <Studio /> : <Navigate to="/join" />}/>
         <Route path="analytics" element={isAuthed ? <Analytics /> : <Navigate to="/join" />}/>
         <Route path="profile" element={isAuthed ? <Profile /> : <Navigate to="/join" />}/>
@@ -63,6 +73,7 @@ const App = () => {
     ),
   );
 
+
   return (
     <>
       <RouterProvider router={router} />
@@ -80,4 +91,8 @@ const App = () => {
   );
 };
 
+
 export default App;
+
+
+

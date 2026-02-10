@@ -354,7 +354,7 @@ const Profile = () => {
       {/* CREATE MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-md">
+          <div className="bg-black p-6 rounded-2xl w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Create Artwork</h2>
 
             {/* IMAGE */}
@@ -373,7 +373,7 @@ const Profile = () => {
             <input
               type="text"
               placeholder="Title"
-              className="w-full mt-4 p-3 rounded-lg bg-zinc-800"
+              className="w-full mt-4 p-3 rounded-lg border"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
@@ -381,7 +381,7 @@ const Profile = () => {
             {/* DESCRIPTION */}
             <textarea
               placeholder="Description"
-              className="w-full mt-3 p-3 rounded-lg bg-zinc-800"
+              className="w-full mt-3 p-3 rounded-lg border"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -390,7 +390,7 @@ const Profile = () => {
             <input
               type="number"
               placeholder="Royalty (1–99)"
-              className="w-full mt-3 p-3 rounded-lg bg-zinc-800"
+              className="w-full mt-3 p-3 rounded-lg border"
               value={royaltyP}
               onChange={(e) => setRoyaltyP(e.target.value)}
             />
@@ -406,7 +406,7 @@ const Profile = () => {
                   setImage("");
                 }}
                 disabled={isLoading}
-                className="flex-1 p-3 rounded-xl bg-zinc-700"
+                className="flex-1 p-3 rounded-xl  text-gray-600 hover:bg-gray-200 cursor-pointer"
               >
                 Cancel
               </button>
@@ -414,7 +414,7 @@ const Profile = () => {
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
-                className="flex-1 p-3 rounded-xl bg-white text-black font-bold disabled:opacity-50"
+                className="flex-1 p-3 rounded-xl bg-[#7c3aed] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold disabled:opacity-50 cursor-pointer"
               >
                 {isLoading ? "Creating..." : "Create"}
               </button>
