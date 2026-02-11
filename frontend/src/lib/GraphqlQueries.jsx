@@ -20,7 +20,9 @@ export const GET_ARTISTS = gql`
 
 export const GET_ARTWORKS = gql`
   query GetArtworks {
-    artworkStates {
+    artworkStates(
+    orderBy: blockTimestamp
+    orderDirection: desc) {
       artworkID
       artworkTitle
       available
@@ -31,6 +33,7 @@ export const GET_ARTWORKS = gql`
       nftMinted
       originalArtist
       royaltyP
+      saleType
     }
   }
 `;

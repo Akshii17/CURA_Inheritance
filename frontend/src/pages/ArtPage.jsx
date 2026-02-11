@@ -129,9 +129,9 @@ const ArtPage = () => {
                   )}
 
                   {/* END AUCTION */}
-                  {!isCurrentlyForSale && artwork?.saleType === "Auction" && (
+                  {!isCurrentlyForSale && artwork?.saleType === "auction" && (
                     <button
-                      onClick={handleEndAuction}
+                      //onClick={handleEndAuction}
                       className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] text-[#F3E5AB] cursor-pointer"
                     >
                       END AUCTION
@@ -139,9 +139,9 @@ const ArtPage = () => {
                   )}
 
                   {/* END SALE */}
-                  {!isCurrentlyForSale && artwork?.saleType === "Fixed" && (
+                  {!isCurrentlyForSale && artwork?.saleType === "direct" && (
                     <button
-                      onClick={handleEndSale}
+                      // onClick={handleEndSale}
                       className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] text-[#F3E5AB] cursor-pointer"
                     >
                       END SALE

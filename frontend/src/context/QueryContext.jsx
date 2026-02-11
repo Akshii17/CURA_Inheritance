@@ -16,11 +16,16 @@ export const QueryContextProvider = ({ children }) => {
 
 
     // artworks
-    const [artworks, setArtworks] = useState([]);
+    const [dup_artworks, setArtworks] = useState([]);
     const [DS, setDS] = useState([]);
     const [auction, setAuction] = useState([]);
     const [direct, setDirect] = useState([]);
     const [error, setError] = useState(null);
+
+    const seen = new Set();
+    const artworks = [];
+
+    
 
 
     const fetchArtworks = async () => {
@@ -32,10 +37,16 @@ export const QueryContextProvider = ({ children }) => {
         }
     };
 
-
     useEffect(() => {
         fetchArtworks();
     }, []);
+
+    for (const art of dup_artworks) {
+        if (!seen.has(art.artworkID)) {
+            seen.add(art.artworkID);
+            artworks.push(art);
+        }
+    }
 
 
     const fetchDS = async () => {
@@ -54,21 +65,21 @@ export const QueryContextProvider = ({ children }) => {
 
 
     return (
-  <QueryContext.Provider
-    value={{
-      artworks,
-      error,
-      DS,
+        <QueryContext.Provider
+            value={{
+                artworks,
+                error,
+                DS,
 
 
-      fetchArtworks,
-      setArtworks,
-      fetchDS,
-    }}
-  >
-    {children}
-  </QueryContext.Provider>
-);
+                fetchArtworks,
+                setArtworks,
+                fetchDS,
+            }}
+        >
+            {children}
+        </QueryContext.Provider>
+    );
 
 
 

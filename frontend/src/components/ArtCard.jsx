@@ -6,11 +6,15 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
+
 
 
 const ArtCard = ({ art, page }) => {
 
   const { contract, address, isConnected, artist, fetchArtist } = useArtistContext();
+  const { DS } = useQueryContext();
+
 
   const navigate = useNavigate();
 
@@ -113,6 +117,7 @@ const ArtCard = ({ art, page }) => {
 
   return (
     <div className="block group">
+      {console.log("ART OBJECT:", art)}
       {/* Image */}
       <Link to={`/art/${art.artworkID}`}>
         <div className="relative overflow-hidden rounded-lg bg-neutral-900 cursor-pointer">
@@ -208,8 +213,8 @@ const ArtCard = ({ art, page }) => {
             </Link>
 
             <p className="text-sm text-gray-300">
-              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auction.winningBid} </span>}
-              {art.saleType === "auction" && <span className="text-gray-500">Price: {DS.price} </span>}
+              {/* {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auction.winningBid} </span>} */}
+              {art.saleType === "direct" && <span className="text-gray-500">Price: {DS.price} </span>}
               {"ETH"}
             </p>
           </div>

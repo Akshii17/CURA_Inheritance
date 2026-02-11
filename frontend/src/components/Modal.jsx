@@ -1,6 +1,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useArtistContext } from "../context/ArtistContext";
+import { ethers } from "ethers";
 
 
 const Modal = ({ isOpen, onClose, id }) => {
@@ -54,14 +55,18 @@ const Modal = ({ isOpen, onClose, id }) => {
   const createDS = async (price, id) => {
     try {
       setIsLoading(true);
+
+      let stringPrice = price.toString();
+      let priceInWei = ethers.parseEther(stringPrice);
+
       if (!isConnected || !address || !contract) {
         return;
       }
 
-      console.log(duration);
+      console.log(priceInWei);
 
       const sellds = await contract.createDS(
-        price, id
+        priceInWei, id
       );
 
       await sellds.wait();
@@ -82,6 +87,10 @@ const Modal = ({ isOpen, onClose, id }) => {
   const createAuction = async (id, basePrice, duration) => {
     try {
       setIsLoading(true);
+
+      let stringBasePrice = basePrice.toString();
+      let basePriceInWei = ethers.parseEther(stringBasePrice);
+
       if (!isConnected || !address || !contract) {
         return;
       }
@@ -89,14 +98,14 @@ const Modal = ({ isOpen, onClose, id }) => {
       console.log(todaydate, end, duration);
 
       const sellauc = await contract.createAuction(
-        id, basePrice, duration
+        id, basePriceInWei, duration
       );
 
       await sellauc.wait();
       toast.success("Auction created successfully");
 
       // Reset state
-      setOpen(false);
+      onClose();
       setPrice("");
       setBasePrice("");
       setIsLoading(false);
