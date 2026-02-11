@@ -1,51 +1,58 @@
 import { useParams } from "react-router-dom";
+import { useMemo } from "react";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { Lock } from "lucide-react";
-import SampleArtData from "../constants/SampleArtData";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
+import { ethers } from "ethers";
 
 const DirectSaleCheckout = () => {
 
   const { contract, address, isConnected } = useArtistContext();
-  const { DS } = useQueryContext();
+  const { artworks, fetchArtworks, DS } = useQueryContext();
 
   const { id } = useParams();
-  const art = SampleArtData.find((a) => a.id === Number(id));
 
-  let DSid = DS.directSaleID;
+  const artwork = useMemo(() => {
+    if (!artworks || !id) return null;
 
-  if (!art) {
+    return artworks.find(
+      (a) => String(a.artworkID) === String(id)
+    );
+  }, [artworks, id]);
+
+  const dsObject = DS.find(
+    (item) => item.artworkID === artwork.artworkID
+  );
+
+  const DSid = dsObject?.directSaleID;
+  if (!artwork) {
     return <div className="text-white p-10">Artwork not found</div>;
   }
 
-  const artwork = {
-    image: art.image,
-    title: art.title,
-    artist: art.artist,
-    tags: art.tags,
-    priceETH: art.piece || 1.1,
-    gasETH: 0.002,
-  };
+  let DSpriceWei = dsObject?.price;
+  const priceInEth = ethers.formatEther(DSpriceWei);
+
+
 
   const [finalSaleChecked, setFinalSaleChecked] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
 
-  const totalETH = artwork.priceETH + artwork.gasETH;
   const canPay = finalSaleChecked && ownershipChecked;
 
-  const handlePay = async() => {
+  const handlePay = async () => {
     try {
       setIsLoading(true);
       if (!isConnected || !address || !contract) {
         return;
       }
 
-      console.log();
+      console.log(DSid);
 
-      const tx = await contract.buyDSArtwork(DSid);
+      const tx = await contract.buyDSArtwork(DSid, {value : DSpriceWei});
 
       await tx.wait();
       toast.success("Artwork purchased");
@@ -68,30 +75,20 @@ const DirectSaleCheckout = () => {
         <div className="space-y-6 flex flex-col items-center h-full justify-center">
           <div className="relative w-full max-w-md aspect-square">
             <img
-              src={artwork.image}
-              alt={artwork.title}
+              src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
+              alt={artwork.artworkTitle}
               className="rounded-xl shadow-lg w-full h-full object-cover"
             />
 
-            
+
           </div>
 
           <div className="text-center">
             <h1 className="text-3xl font-bold text-[#F3E5AB]">
-              {artwork.title}
+              {artwork.artworkTitle}
             </h1>
-            <p className="text-gray-400">by {artwork.artist}</p>
-
-            <div className="flex flex-wrap gap-2 mt-4 justify-center">
-              {artwork.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="text-xs px-3 py-1 rounded-full bg-white/10"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+            <p className="text-gray-400">by {artwork.originalArtist}</p>
+            {/* <p className="text-gray-400">Sold by: {artwork.currentOwner}</p> */}
           </div>
         </div>
 
@@ -104,21 +101,7 @@ const DirectSaleCheckout = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Artwork Price</span>
-              <span>{artwork.priceETH.toLocaleString()} ETH</span>
-            </div>
-
-            <div className="flex justify-between text-gray-400">
-              <span>Gas / Transaction</span>
-              <span>{artwork.gasETH.toLocaleString()} ETH</span>
-            </div>
-
-            <hr className="border-white/10" />
-
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total</span>
-              <span className="text-[#F3E5AB]">
-                {totalETH.toLocaleString()} ETH
-              </span>
+              <span>{priceInEth} ETH</span>
             </div>
           </div>
 
@@ -161,9 +144,9 @@ const DirectSaleCheckout = () => {
             </div>
 
             <p>
-              You are about to purchase <b>“{artwork.title}”</b> by{" "}
-              <b>{artwork.artist}</b> for{" "}
-              <b>{totalETH.toLocaleString()} ETH</b>.
+              You are about to purchase <b>“{artwork.artworkTitle}”</b> by{" "}
+              <b>{artwork.originalArtist}</b> for{" "}
+              <b>{priceInEth} ETH</b>.
             </p>
 
             <p className="text-red-400/80 italic text-xs">
@@ -175,13 +158,12 @@ const DirectSaleCheckout = () => {
             disabled={!canPay}
             onClick={handlePay}
             className={`mt-auto w-full bg-indigo-600 hover:bg-indigo-800 text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
-              ${
-                canPay
-                  ? "hover:opacity-90 cursor-pointer"
-                  : "opacity-30 cursor-not-allowed"
+              ${canPay
+                ? "hover:opacity-90 cursor-pointer"
+                : "opacity-30 cursor-not-allowed"
               }`}
           >
-            Confirm & Pay {totalETH.toLocaleString()} ETH
+            Confirm & Pay {priceInEth} ETH
           </button>
         </div>
       </div>

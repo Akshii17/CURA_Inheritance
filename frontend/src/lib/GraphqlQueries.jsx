@@ -36,8 +36,8 @@ export const GET_ARTWORKS = gql`
 `;
 
 export const GET_DS = gql`
-  query MyQuery($id: BigInt!) {
-    dsstates(where: { directSaleID: $id }) {
+  query GetDS {
+    dsstates {
       artworkID
       directSaleID
       price

@@ -38,7 +38,7 @@ export const QueryContextProvider = ({ children }) => {
     }, []);
 
 
-        const fetchDS = async () => {
+    const fetchDS = async () => {
         try {
             const data = await request(GRAPHQL_ENDPOINT, GET_DS);
             setDS(data.dsstates);
