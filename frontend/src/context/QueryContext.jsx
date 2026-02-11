@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { request, gql } from "graphql-request";
-import { GET_ARTWORKS } from "../lib/GraphqlQueries";
+import { GET_ARTWORKS, GET_AUCTIONS, GET_DS } from "../lib/GraphqlQueries";
 
 
 
@@ -19,7 +19,6 @@ export const QueryContextProvider = ({ children }) => {
     const [dup_artworks, setArtworks] = useState([]);
     const [DS, setDS] = useState([]);
     const [auction, setAuction] = useState([]);
-    const [direct, setDirect] = useState([]);
     const [error, setError] = useState(null);
 
     const seen = new Set();
@@ -64,17 +63,33 @@ export const QueryContextProvider = ({ children }) => {
     }, []);
 
 
+     const fetchAuction = async () => {
+        try {
+            const data = await request(GRAPHQL_ENDPOINT, GET_AUCTIONS);
+            setAuction(data.auctionStates);
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+
+    useEffect(() => {
+        fetchAuction();
+    }, []);
+
     return (
         <QueryContext.Provider
             value={{
                 artworks,
                 error,
                 DS,
+                auction,
 
 
                 fetchArtworks,
                 setArtworks,
                 fetchDS,
+                fetchAuction,
             }}
         >
             {children}

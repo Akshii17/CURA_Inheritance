@@ -1,21 +1,52 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Clock, Gavel } from "lucide-react";
-import SampleArtData from "../constants/SampleArtData";
+import { ethers } from "ethers";
+import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
+import toast from "react-hot-toast";
 
 const AuctionCheckout = () => {
-  const { id } = useParams();
-  const art = SampleArtData.find(a => a.id === Number(id));
 
-  if (!art) {
+  const { contract, address, isConnected } = useArtistContext();
+  const { artworks, fetchArtworks, auction } = useQueryContext();
+
+  const { id } = useParams();
+
+  const artwork = useMemo(() => {
+    if (!artworks || !id) return null;
+
+    return artworks.find(
+      (a) => String(a.artworkID) === String(id)
+    );
+  }, [artworks, id]);
+
+  if (!artwork) {
     return <div className="text-white p-10">Artwork not found</div>;
   }
+
+  const auctionObject = auction?.find(
+    (item) => item.artID === artwork.artworkID
+  );
+
+  let AuctionID = auctionObject.auctionID;
+
+  let aucBasePriceWei = auctionObject?.basePrice;
+  const priceInEthAuc = aucBasePriceWei
+    ? ethers.formatEther(aucBasePriceWei)
+    : "0";
+
+  let aucWinningPriceWei = auctionObject?.winningBid;
+  const priceInEthWin = aucWinningPriceWei
+    ? ethers.formatEther(aucWinningPriceWei)
+    : "0";
 
   const [tick, setTick] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
 
   const [finalSaleChecked, setFinalSaleChecked] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const canPay = finalSaleChecked && ownershipChecked;
 
@@ -40,29 +71,55 @@ const AuctionCheckout = () => {
     };
   };
 
-  const time = getTimeRemaining(art.endDate);
+  const time = getTimeRemaining(auctionObject.endDate);
 
-  const handlePlaceBid = () => {
-    console.log("Placing bid:", bidAmount);
+
+
+  const handlePlaceBid = async () => {
+    try {
+      setIsLoading(true);
+
+      let stringBid = bidAmount.toString();
+      let bidInWei = ethers.parseEther(stringBid);
+
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+      console.log(AuctionID);
+
+      const tx = await contract.placeBid(AuctionID, { value: bidInWei });
+
+      await tx.wait();
+      toast.success("Bid Placed");
+
+      // Reset state
+      //show
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error in bidding", error);
+      toast.error("Something went wrong, Please try again later");
+      setIsLoading(false);
+    }
   };
 
   return (
-    
+
     <div className=" w-full text-white flex justify-center px-6 py-3 items-center">
       <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-stretch">
 
         <div className="space-y-6 flex flex-col items-center h-full">
           <div className="relative w-full max-w-md aspect-square">
             <img
-              src={art.image}
-              alt={art.title}
+              src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
+              alt={artwork.artworkTitle}
               className="rounded-xl shadow-lg w-full h-full object-cover"
             />
           </div>
 
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-[#F3E5AB]">{art.title}</h1>
-            <p className="text-gray-400">by {art.artist}</p>
+            <h1 className="text-3xl font-bold text-[#F3E5AB]">{artwork.artworkTitle}</h1>
+            <p className="text-gray-400">by {artwork.originalArtist}</p>
           </div>
 
           <div className="flex justify-center gap-4">
@@ -91,14 +148,15 @@ const AuctionCheckout = () => {
             <div className="flex justify-between">
               <span>Number of Bids</span>
               <span>17 </span>
+              {/* ???????????????????????????????????????add from graph */}
+            </div>
+            <div className="flex justify-between">
+              <span>Base Price</span>
+              <span>{priceInEthAuc} ETH</span>
             </div>
             <div className="flex justify-between">
               <span>Current Bid</span>
-              <span>{art.price} {art.currency}</span>
-            </div>
-            <div className="flex justify-between text-gray-400">
-              <span>Minimum Increment</span>
-              <span>0.0006 ETH</span>
+              <span>{priceInEthWin} ETH</span>
             </div>
           </div>
 
@@ -107,7 +165,7 @@ const AuctionCheckout = () => {
             <input
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
-              placeholder={`Enter at least ${art.price + art.minIncrement}`}
+              placeholder={`Enter at least ${auctionObject.winningBid != 0.0? priceInEthWin : priceInEthAuc}`}
               className="w-full bg-black/40 rounded-xl px-4 py-3 outline-none"
             />
           </div>
@@ -145,18 +203,17 @@ const AuctionCheckout = () => {
             </label>
           </div>
 
-  
+
           <button
             disabled={!canPay}
-            //onClick={}
+            onClick={handlePlaceBid}
             className={`mt-auto w-full bg-indigo-600 hover:bg-indigo-800 text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
-              ${
-                canPay
-                  ? "hover:opacity-90 cursor-pointer"
-                  : "opacity-30 cursor-not-allowed"
+              ${canPay
+                ? "hover:opacity-90 cursor-pointer"
+                : "opacity-30 cursor-not-allowed"
               }`}
           >
-            Confirm & Bid __ ETH
+            Confirm & Bid {bidAmount} ETH
           </button>
         </div>
       </div>

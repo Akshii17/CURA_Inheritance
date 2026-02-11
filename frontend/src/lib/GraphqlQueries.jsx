@@ -52,3 +52,19 @@ export const GET_DS = gql`
     }
   }
 `;
+
+export const GET_AUCTIONS = gql`
+  query GetDS {
+    auctionStates {
+      artID
+      auctionID
+      basePrice
+      endTime
+      ended
+      seller
+      winner
+      winningBid
+      blockTimestamp
+    }
+  }
+`;

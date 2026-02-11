@@ -366,7 +366,7 @@ const Profile = () => {
             />
 
             {imagePreview && (
-              <img src={imagePreview} className="mt-3 rounded-xl" />
+              <img src={imagePreview} className="mt-3 rounded-xl h-[200px] w-[200px]" />
             )}
 
             {/* TITLE */}

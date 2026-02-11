@@ -10,7 +10,7 @@ const ArtPage = () => {
   const [open, setOpen] = useState(false);
   const { artist, fetchArtist } = useArtistContext();
 
-  const { artworks, fetchArtworks } = useQueryContext();
+  const { artworks, auction } = useQueryContext();
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -163,7 +163,7 @@ const ArtPage = () => {
                     <Link to = {`/auctioncheckout/${artwork.artworkID}`}>
                       <div
                       className="w-full py-5 bg-[#7C3AED] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
-                      onClick={handlePlaceBid}
+                      // onClick={handlePlaceBid}
                     >
                       PLACE YOUR BID
                       </div>

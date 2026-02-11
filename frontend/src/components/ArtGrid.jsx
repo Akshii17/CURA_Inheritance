@@ -13,8 +13,10 @@ const ArtGrid = ({ artworks, page }) => {
       "
     >
       {artworks.map((art) => (
+        
 
         <ArtCard key={art.id} art={art} page={page}/>
+        
       ))}
     </div>
   );
