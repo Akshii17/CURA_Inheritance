@@ -10,7 +10,6 @@ const Testing = () => {
   const { artworks, fetchArtworks } = useQueryContext();
 
 
-  const IPFS_GATEWAY = "https://gateway.pinata.cloud/ipfs/";
 
 
 
@@ -25,7 +24,7 @@ const Testing = () => {
         <>
           <React.Fragment key={artwork.id}>
             <img
-              src={`${IPFS_GATEWAY}${artwork.ipfsHash}`}
+              src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
               alt={artwork.artworkTitle}
               className="w-full h-64 object-cover rounded-lg"
               loading="lazy"

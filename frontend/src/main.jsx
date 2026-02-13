@@ -41,7 +41,7 @@ const chains = [sepolia];
 
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  //<StrictMode>
     <WagmiProvider config={config}>
       <ApolloProvider client={apolloClient}>
       <QueryClientProvider client={queryClient}>
@@ -57,7 +57,7 @@ createRoot(document.getElementById("root")).render(
       </QueryClientProvider>
       </ApolloProvider>
     </WagmiProvider>
-  </StrictMode>,
+  //</StrictMode>,
 );
 
 

@@ -194,14 +194,7 @@ const HomePage = () => {
     return { id: i, colSpan, rowSpan, img: ART_IMAGES[imgIndex], delay };
   }), []);
 
-  const handleNavClick = (item) => {
-    setActiveNav(item);
-    setIsMobileMenuOpen(false);
-    if (item === 'Home') navigate('/home');
-    else if (item === 'Analytics') navigate('/analytics');
-    else if (item === 'Explore') navigate('/explore');
-    else if (item === 'Studio') navigate('/studio');
-  };
+
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -255,38 +248,7 @@ const HomePage = () => {
       <div className="noise-overlay" />
       <div className="spotlight" style={{ '--x': `${mousePos.x}px`, '--y': `${mousePos.y}px` }} />
 
-      {/*header, pls change it..*/}
-      <header className="responsive-padding" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '24px 60px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, backgroundColor: 'rgba(5,5,5,0.8)', backdropFilter: 'blur(20px)', zIndex: 1000 }}>
-        <div style={{ fontSize: 24, fontWeight: 600, letterSpacing: 1, display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-serif)', color: '#fff' }}>
-          <Hexagon size={28} strokeWidth={1.5} /> CURA
-        </div>
-        <div className="desktop-nav" style={{ display: 'flex', alignItems: 'center', gap: 48 }}>
-          <nav style={{ display: 'flex', gap: 40 }}>
-            {['Home', 'Explore', 'Studio', 'Analytics'].map((item) => (
-              <button key={item} onClick={() => handleNavClick(item)} style={{ background: 'none', border: 'none', color: activeNav === item ? '#ffffff' : '#6b6b6b', cursor: 'pointer', fontSize: 13, padding: 0, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', position: 'relative' }}>
-                {item}
-                {activeNav === item && <div style={{ position: 'absolute', bottom: -8, left: 0, right: 0, height: 2, backgroundColor: '#ffffff' }} />}
-              </button>
-            ))}
-          </nav>
-          <Link to="/profile">
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}>
-              <User size={20} color="#ffffff" />
-            </div>
-          </Link>
-        </div>
-        <button className="mobile-btn" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} style={{ display: 'none', background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}>
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        {isMobileMenuOpen && (
-          <div style={{ position: 'fixed', top: 80, left: 0, right: 0, bottom: 0, backgroundColor: '#050505', zIndex: 999, padding: 40, display: 'flex', flexDirection: 'column', gap: 30, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-             {['Home', 'Explore', 'Studio', 'Analytics'].map((item) => (
-              <button key={item} onClick={() => handleNavClick(item)} style={{ background: 'none', border: 'none', color: activeNav === item ? '#ffffff' : '#6b6b6b', cursor: 'pointer', fontSize: 20, padding: 0, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', textAlign: 'left' }}>{item}</button>
-            ))}
-             <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} style={{ marginTop: 20, color: 'white', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}><User size={20} /> My Profile</Link>
-          </div>
-        )}
-      </header>
+      
 
       <main style={{ position: 'relative', zIndex: 2 }}>
         
@@ -311,7 +273,7 @@ const HomePage = () => {
             <h1 className="hero-title" style={{ fontSize: 72, fontWeight: 400, margin: '0 0 20px 0', letterSpacing: -2, lineHeight: 1.1, fontFamily: 'var(--font-serif)', color: '#fff', textShadow: '0 10px 30px rgba(0,0,0,0.9)' }}>Where Art Meets <br /><span style={{ fontStyle: 'italic', color: '#7c3AED' }}>Blockchain</span></h1>
             <p style={{ fontSize: 18, color: '#e0e0e0', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6, fontWeight: 300, textShadow: '0 4px 12px rgba(0,0,0,0.8)' }}>Discover extraordinary digital masterpieces. Bid, collect, and own pieces of art history.</p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 40 }}>
-              <button onClick={() => navigate('/how-it-works')} className="primary-btn" style={{ padding: '14px 32px', borderRadius: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 30px rgba(147, 61, 179, 0.6)' }}>How it works <ArrowRight size={16} /></button>
+              <button onClick={() => navigate('/testing')} className="primary-btn" style={{ padding: '14px 32px', borderRadius: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 30px rgba(147, 61, 179, 0.6)' }}>How it works <ArrowRight size={16} /></button>
             </div>
           </div>
         </section>

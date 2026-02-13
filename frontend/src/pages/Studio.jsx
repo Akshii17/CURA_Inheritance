@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRef } from "react";
 import { X } from "lucide-react"
 import ArtGrid from "../components/ArtGrid";
@@ -11,8 +11,8 @@ import { useArtistContext } from '../context/ArtistContext';
 const Studio = () => {
 
  
-  const { artist, fetchArtist } = useArtistContext();
-  const { artworks, fetchArtworks } = useQueryContext();
+  const { artist, contract } = useArtistContext();
+  const { artworks, likedArtworks } = useQueryContext();
 
   const loggedArtistAddress = artist?.artistAddress.toLowerCase();
 
@@ -21,6 +21,29 @@ const Studio = () => {
   const TABS = ["Your Art", "Purchased", "Favorites"];
   const STATUS_FILTERS = ["Live", "Up for Sale", "Sold", "Unsold"];
   const [status, setStatus] = useState(null);
+
+  const [owners, setOwners] = useState({});
+  
+    useEffect(() => {
+      const fetchOwners = async () => {
+        if (!contract || artworks.length === 0) return;
+  
+        const ownershipMap = {};
+  
+        for (const art of artworks) {
+          try {
+            const owner = await contract.checkOwnership(art.artworkID);
+            ownershipMap[art.artworkID] = owner.toLowerCase();
+          } catch (err) {
+            console.error("Error fetching owner:", err);
+          }
+        }
+  
+        setOwners(ownershipMap);
+      };
+  
+      fetchOwners();
+    }, [contract, artworks]);
 
   //Art in Your Art
   const myArt = artworks.filter(
@@ -34,14 +57,18 @@ const Studio = () => {
   });
 
   //Art in Purchased
-  const purchasedArt = artworks.filter(
-    art => art.currentOwner?.includes(loggedArtistAddress) // add currentOwner in smart contract
-  );
+  const purchasedArt = artworks.filter( (art) => {
+    const owner = owners[art.artworkID];
+    return(
+    owner === loggedArtistAddress &&
+    art.originalArtist?.toLowerCase() !== loggedArtistAddress)
+});
 
   //Art in Favorites
-  const likedArt = artworks.filter(
-    art => art.likedBy?.includes(loggedArtistAddress) // ?????????????????????????????????
-  );
+  const likedArt = artworks.filter(art =>
+  likedArtworks.some(liked => liked.artWorkID === art.artworkID)
+); 
+  
 
   //filters in Favorites
   const filteredLikedArt = likedArt.filter((art) => {
@@ -177,7 +204,8 @@ const Studio = () => {
                     />
                   )}
           </button>
-          <ArtGrid artworks={filteredLikedArt} />
+          {console.log(likedArt)}
+          <ArtGrid artworks={likedArt} />
           </>
         )
       )}

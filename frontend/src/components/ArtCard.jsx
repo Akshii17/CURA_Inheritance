@@ -16,13 +16,19 @@ const ArtCard = ({ art, page }) => {
   
 
   const { contract, address, isConnected, artist } = useArtistContext();
-  const { DS, auction } = useQueryContext();
+  const { DS, auction, artists } = useQueryContext();
+
+  const artistObject = artists?.find(
+  (item) =>
+    item?.artistAddress?.toLowerCase() === art?.originalArtist?.toLowerCase()
+);
+
+
+
 
   const dsObject = DS?.find(
     (item) => item.artworkID === art.artworkID
   );
-
-  
 
   let DSpriceWei = dsObject?.price;
   const priceInEth = DSpriceWei
@@ -46,7 +52,7 @@ const ArtCard = ({ art, page }) => {
 
   const navigate = useNavigate();
 
-  let loggedArtistAddress = artist.artistAddress.toLowerCase();
+  let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
 
   const [isFavorite, setIsFavorite] = useState(false);
@@ -113,32 +119,6 @@ const ArtCard = ({ art, page }) => {
       toast.error("Something went wrong, Please try again later");
     }
 
-  };
-
-  const handleBuy = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(`/directcheckout/${art.ArtworkID}`);
-  };
-
-  const handleSell = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpen(true);
-  };
-
-  const handleRemove = (e) => {
-    //open modal to remove
-  };
-
-  const handleEndAuction = (e) => {
-    //open modal to end auc
-  };
-
-  const handlePlaceBid = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(`/auctioncheckout/${art.id}`);
   };
 
 
@@ -234,14 +214,14 @@ const ArtCard = ({ art, page }) => {
         <div className="flex justify-between" >
           <div className=" space-y-1">
 
-            <Link to = {`/artist/${art.artistId}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
+            <Link to = {`/artist/${artistObject?.artistAddress}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
   transition-all duration-300
   hover:decoration-gray-300 hover:text-gray-300">
-              {art.originalArtist} {/*fetch his nameeee??????????????*/}
+              By {artistObject.name} 
             </Link>
 
             <p className="text-sm text-gray-300">
-              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auction.winningBid?priceInEthWin:priceInEthAuc} </span>}
+              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auctionObject.winningBid?priceInEthWin:priceInEthAuc} </span>}
               {art.saleType === "direct" && <span className="text-gray-500">Price: {priceInEth} </span>}
               {"ETH"}
             </p>

@@ -3,7 +3,9 @@ import { gql } from "@apollo/client";
 
 export const GET_ARTISTS = gql`
   query GetArtists {
-    artistStates {
+    artistStates(
+    orderBy: blockTimestamp
+    orderDirection: desc) {
       artistAddress
       followerCount
       id
@@ -13,9 +15,11 @@ export const GET_ARTISTS = gql`
       transactionHash
       blockNumber
       blockTimestamp
+      bio
     }
   }
 `;
+
 
 
 export const GET_ARTWORKS = gql`
@@ -55,7 +59,9 @@ export const GET_DS = gql`
 
 export const GET_AUCTIONS = gql`
   query GetDS {
-    auctionStates {
+    auctionStates(
+    orderBy: blockTimestamp
+    orderDirection: desc) {
       artID
       auctionID
       basePrice
@@ -66,5 +72,21 @@ export const GET_AUCTIONS = gql`
       winningBid
       blockTimestamp
     }
+  }
+`;
+
+export const GET_LIKED_ARTWORKS = gql`
+  query GetLikedArtworks ($user: Bytes!){
+    artworkLikeds(
+      where: {
+        liker: $user,
+        likeUnlikeArtwork: true
+      }
+      orderBy: blockTimestamp
+      orderDirection: desc
+  ) {
+    artWorkID
+    
+  }
   }
 `;

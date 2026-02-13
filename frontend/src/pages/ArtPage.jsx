@@ -2,15 +2,20 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
+import toast from "react-hot-toast";
+import { ethers } from "ethers";
 import { Link } from "react-router-dom";
 import Modal from "../components/Modal";
 
 const ArtPage = () => {
 
   const [open, setOpen] = useState(false);
-  const { artist, fetchArtist } = useArtistContext();
+  const [currentOwner, setCurrentOwner] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { artworks, auction } = useQueryContext();
+  const { artist, contract, isConnected, address } = useArtistContext();
+
+  const { artworks, auction, DS } = useQueryContext();
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,22 +28,58 @@ const ArtPage = () => {
     );
   }, [artworks, id]);
 
+  const auctionObject = auction?.find(
+    (item) => item.artID === artwork.artworkID
+  );
+
+  let aucBasePriceWei = auctionObject?.basePrice;
+  const priceInEthAuc = aucBasePriceWei
+    ? ethers.formatEther(aucBasePriceWei)
+    : "0";
+
+  let aucWinningPriceWei = auctionObject?.winningBid;
+  const priceInEthWin = aucWinningPriceWei
+    ? ethers.formatEther(aucWinningPriceWei)
+    : "0";
+
+  let AuctionID = auctionObject?.auctionID;
+
+  const dsObject = DS.find(
+    (item) => item.artworkID === artwork.artworkID
+  );
+
+  const DSid = dsObject?.directSaleID;
+
+  let dsPriceWei = dsObject?.price;
+  const priceInEth = dsPriceWei
+    ? ethers.formatEther(dsPriceWei)
+    : "0";
+
+  console.log(priceInEth)
+
   let loggedArtistAddress = artist.artistAddress.toLowerCase();
 
-  // try {
-  //   loggedArtistAddress = ethers.getAddress(artist.artistAddress);
-  //   console.log(loggedArtistAddress);
-  // } catch (error) {
-  //   console.error("Invalid address");
-  //   toast.error("Something went wrong, Please try again later")
-  // }
+  useEffect(() => {
+    const fetchOwner = async () => {
+      try {
+        if (!contract || !artwork?.artworkID) return;
+
+        const owner = await contract.checkOwnership(artwork.artworkID);
+        setCurrentOwner(owner);
+      } catch (error) {
+        console.error("Error fetching owner:", error);
+      }
+    };
+
+    fetchOwner();
+  }, [contract, artwork]);
 
 
   const [tick, setTick] = useState(0);
 
   // Logic for roles
   const isCreator = artwork?.originalArtist.toLowerCase() === loggedArtistAddress;
-  const isCollector = artwork?.purchasedBy?.includes(loggedArtistAddress); //?????????????????
+  const isCollector = currentOwner && currentOwner.toLowerCase() !== artwork.originalArtist.toLowerCase();
   const isCurrentlyForSale = artwork?.available;
 
   useEffect(() => {
@@ -53,6 +94,55 @@ const ArtPage = () => {
   );
 
   if (!artwork) return <div className="p-10 text-[#F3E5AB] bg-[#050505] min-h-screen">Art not found</div>;
+
+  const handleEndSale = async () => {
+    try {
+      setIsLoading(true);
+
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+      console.log(DSid);
+
+      const endDS = await contract.endDS(DSid);
+
+      await endDS.wait();
+      toast.success("Direct Sale ended");
+
+      // Reset state
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error in ending sale", error);
+      toast.error("Something went wrong, Please try again later");
+      setIsLoading(false);
+    }
+  };
+
+  const handleEndAuction = async () => {
+    try {
+      setIsLoading(true);
+
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+
+
+      const endAuction = await contract.endAuction(AuctionID);
+
+      await endAuction.wait();
+      console.log(AuctionID);
+      toast.success("Auction ended");
+
+      // Reset state
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error in ending auction", error);
+      toast.error("Something went wrong, Please try again later");
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
@@ -90,15 +180,47 @@ const ArtPage = () => {
                 </p>
               </div>
 
+              <div className="pt-2">
+                {artwork.saleType === "auction" && (
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mt-1">
+                      Base Price:
+                    </p>
+                    <p className="text-sm text-neutral-400 font-light">
+                      {priceInEthAuc} ETH
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Pricing Section - Always Visible */}
               <div className="bg-white/5 rounded-xl p-6 border border-white/5">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">
-                      {artwork.saleType === "auction" ? "Current Bid" : "Price"}
-                    </p>
-                    <p className="text-3xl font-bold text-[#7C3AED]">{artwork.winningBid || artwork.basePrice} ETH</p>
+                    {artwork.saleType === "auction" && (
+                      <>
+                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">
+                          Current Bid
+                        </p>
+                        <p className="text-3xl font-bold text-[#7C3AED]">
+                          {priceInEthWin} ETH
+                        </p>
+                      </>
+                    )}
+
+                    {artwork.saleType === "direct" && (
+                      <>
+                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">
+                          Price
+                        </p>
+                        <p className="text-3xl font-bold text-[#7C3AED]">
+                          {priceInEth} ETH
+                        </p>
+                      </>
+                    )}
                   </div>
+
+
                   {artwork.saleType === "auction" && remainingTime && (
                     <div className="text-right">
                       <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">Time Left</p>
@@ -122,7 +244,7 @@ const ArtPage = () => {
                   {isCurrentlyForSale && (
                     <button
                       onClick={() => setOpen(true)}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] text-[#F3E5AB] cursor-pointer"
+                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"
                     >
                       SELL ARTWORK
                     </button>
@@ -131,8 +253,8 @@ const ArtPage = () => {
                   {/* END AUCTION */}
                   {!isCurrentlyForSale && artwork?.saleType === "auction" && (
                     <button
-                      //onClick={handleEndAuction}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] text-[#F3E5AB] cursor-pointer"
+                      onClick={handleEndAuction}
+                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"
                     >
                       END AUCTION
                     </button>
@@ -141,8 +263,8 @@ const ArtPage = () => {
                   {/* END SALE */}
                   {!isCurrentlyForSale && artwork?.saleType === "direct" && (
                     <button
-                      // onClick={handleEndSale}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] text-[#F3E5AB] cursor-pointer"
+                      onClick={handleEndSale}
+                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"
                     >
                       END SALE
                     </button>
@@ -152,28 +274,41 @@ const ArtPage = () => {
               ) : isCollector ? (
                 /* Collector (Owner) Buttons */
                 <div className="flex flex-col gap-3">
-                  <button className="w-full py-5 bg-[#F3E5AB] text-black rounded-xl font-bold tracking-[0.3em] text-xs transition-all">
-                    {isCurrentlyForSale ? "CANCEL RESALE" : "LIST FOR RESALE"}
-                  </button>
+                  {isCurrentlyForSale ? (
+                    <button
+                      onClick={() => setOpen(true)}
+                      className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all cursor-pointer"
+                    >
+                      LIST FOR RESALE
+                    </button>
+                  ) : (
+                    <button
+                      //onClick={}
+                      className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all cursor-pointer"
+                    >
+                      END RESALE
+                    </button>
+                  )}
                 </div>
+
               ) : (
                 /* Public Buyer Button */
                 <>
                   {artwork.saleType === "auction" ? (
-                    <Link to = {`/auctioncheckout/${artwork.artworkID}`}>
+                    <Link to={`/auctioncheckout/${artwork.artworkID}`}>
                       <div
-                      className="w-full py-5 bg-[#7C3AED] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
+                        className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
                       // onClick={handlePlaceBid}
-                    >
-                      PLACE YOUR BID
+                      >
+                        PLACE YOUR BID
                       </div>
                     </Link>
                   ) : (
-                    <Link to ={`/directcheckout/${artwork.artworkID}`}>
-                      <div className="w-full py-5 bg-[#7C3AED] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
-                      
-                    >
-                      PURCHASE ARTWORK
+                    <Link to={`/directcheckout/${artwork.artworkID}`}>
+                      <div className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
+
+                      >
+                        PURCHASE ARTWORK
                       </div>
                     </Link>
                   )}

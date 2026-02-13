@@ -1,9 +1,10 @@
 import toast from "react-hot-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
 import { axiosInstance } from "../lib/axiosInstance";
-import { useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import {
   User,
   Hexagon,
@@ -20,10 +21,44 @@ import {
   Link as LinkIcon,
   Calendar,
 } from "lucide-react";
-import SampleArtData from "../constants/SampleArtData";
 
 const Profile = () => {
-  const { contract, address, isConnected } = useArtistContext();
+  const { contract, address, isConnected, artist, fetchArtist } = useArtistContext();
+  const { artworks, fetchArtworks, artists } = useQueryContext();
+
+  const loggedArtistAddress = artist?.artistAddress?.toLowerCase();
+
+  const artistObject = artists?.find(
+    (item) =>
+      item?.artistAddress?.toLowerCase() === loggedArtistAddress
+  );
+
+  const [owners, setOwners] = useState({});
+
+  useEffect(() => {
+    const fetchOwners = async () => {
+      if (!contract || artworks.length === 0) return;
+
+      const ownershipMap = {};
+
+      for (const art of artworks) {
+        try {
+          const owner = await contract.checkOwnership(art.artworkID);
+          ownershipMap[art.artworkID] = owner.toLowerCase();
+        } catch (err) {
+          console.error("Error fetching owner:", err);
+        }
+      }
+
+      setOwners(ownershipMap);
+    };
+
+    fetchOwners();
+  }, [contract, artworks]);
+
+
+
+
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -56,7 +91,7 @@ const Profile = () => {
       console.log("error", err);
       toast.error(
         err?.response?.data?.message ||
-          "Something went wrong, Please try again later",
+        "Something went wrong, Please try again later",
       );
     },
   });
@@ -127,44 +162,45 @@ const Profile = () => {
   //kachra *****************************************************
 
   const INITIAL_USER = {
-    name: "N. Verma",
-    username: "@shreyy",
-    tagline: "Digital Artist & Curator",
-    followers: "1.2k",
-    about:
-      "Exploring the boundaries of digital minimalism. Focused on monochrome aesthetics, 3D rendering, and the future of Web3 art.",
-    location: "Mumbai, India",
-    website: "cura.art/shreyy",
-    joined: "Joined Jan 2026",
+    name: artistObject.name,
+    username: artistObject.username,
+    tagline: "Digital Artist & Curator", //
+    followers: artistObject.followerCount,
+    about: artistObject.bio,
+    location: "Mumbai, India", //
+    website: "cura.art/shreyy", //
+    joined: "Joined Jan 2026", //
     profileImage: null,
     coverImage:
-      "https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg",
+      "https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg", //
   };
 
-  const mockAuthUser = {
-    userId: 2,
-    username: "N. Verma",
-  };
 
-  const loggedInUser = mockAuthUser;
 
   const [collectionFilter, setCollectionFilter] = useState("your");
 
-  const filteredArtworks = SampleArtData.filter((art) => {
+  const filteredArtworks = artworks.filter((art) => {
+    const owner = owners[art.artworkID];
+
+    if (!owner) return false; // wait until ownership loads
+
     if (collectionFilter === "your") {
       return (
-        art.ownerId === loggedInUser.userId &&
-        art.artistId === loggedInUser.userId
+        owner === loggedArtistAddress &&
+        art.originalArtist?.toLowerCase() === loggedArtistAddress
       );
     }
+
     if (collectionFilter === "purchased") {
       return (
-        art.ownerId === loggedInUser.userId &&
-        art.artistId !== loggedInUser.userId
+        owner === loggedArtistAddress &&
+        art.originalArtist?.toLowerCase() !== loggedArtistAddress
       );
     }
+
     return true;
   });
+
 
   const INITIAL_NOTIFICATIONS = [
     {
@@ -184,44 +220,7 @@ const Profile = () => {
     },
   ];
 
-  const INITIAL_ARTWORKS = [
-    {
-      id: 1,
-      src: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=500",
-      title: "Midnight Echo",
-      likes: 120,
-    },
-    {
-      id: 2,
-      src: "https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=500",
-      title: "Abstract Waves",
-      likes: 85,
-    },
-    {
-      id: 3,
-      src: "https://images.unsplash.com/photo-1574169208507-84376144848b?q=80&w=500",
-      title: "Geometric Solitude",
-      likes: 210,
-    },
-    {
-      id: 4,
-      src: "https://images.unsplash.com/photo-1634152962476-4b8a00e1915c?q=80&w=500",
-      title: "Dark Matter",
-      likes: 45,
-    },
-    {
-      id: 5,
-      src: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=500",
-      title: "Fluidity",
-      likes: 98,
-    },
-    {
-      id: 6,
-      src: "https://images.unsplash.com/photo-1533158326339-7f3cf2404354?q=80&w=500",
-      title: "Redux",
-      likes: 156,
-    },
-  ];
+
 
   const PREDEFINED_TAGS = [
     "Abstract",
@@ -247,7 +246,6 @@ const Profile = () => {
   const [profileData, setProfileData] = useState(INITIAL_USER);
   const [editFormData, setEditFormData] = useState(INITIAL_USER);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
-  const [artworks, setArtworks] = useState(INITIAL_ARTWORKS); //for popup lookup
 
   const [createForm, setCreateForm] = useState({
     title: "",
@@ -350,7 +348,7 @@ const Profile = () => {
   const displayData = isEditing ? editFormData : profileData;
 
   return (
-    <div className="p-6">
+    <div className="mb-5">
       {/* CREATE MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -684,7 +682,8 @@ const Profile = () => {
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-serif font-bold">Your Collection</h2>
             <span className="text-sm text-gray-400">
-              {filteredArtworks.length} artworks
+              {filteredArtworks.length} {" "}
+              {filteredArtworks.length === 1 ? "artwork" : "artworks"}
             </span>
           </div>
 
@@ -700,11 +699,10 @@ const Profile = () => {
                 className={`
           px-4 py-1.5 rounded-md text-sm font-semibold
           border transition-all
-          ${
-            collectionFilter === item.value
-              ? "bg-white text-black border-white"
-              : "bg-transparent text-gray-400 border-white/10 hover:text-white hover:border-white/30"
-          }
+          ${collectionFilter === item.value
+                    ? "bg-white text-black border-white"
+                    : "bg-transparent text-gray-400 border-white/10 hover:text-white hover:border-white/30"
+                  }
         `}
               >
                 {item.label}
@@ -729,14 +727,14 @@ const Profile = () => {
         "
               >
                 <img
-                  src={art.image}
-                  alt={art.title}
+                  src={`https://gateway.pinata.cloud/ipfs/${art.ipfsHash}`}
+                  alt={art.artworkTitle}
                   className="
-            w-full h-full
-            object-cover
-            transition-transform duration-300
-            group-hover:scale-105
-          "
+                w-full h-full
+                object-cover
+                transition-transform duration-300
+                group-hover:scale-105
+                "
                 />
 
                 {/* hover overlay (optional but looks great) */}
@@ -750,7 +748,7 @@ const Profile = () => {
             flex items-center justify-center
           "
                 >
-                  <span className="text-xs font-semibold text-white">View</span>
+                  <Link to={`/art/${art.artworkID}`} className="text-xs font-semibold text-white">View</Link>
                 </div>
               </div>
             ))}
@@ -763,6 +761,7 @@ const Profile = () => {
             </div>
           )}
         </section>
+
       </main>
       {/*notif image popup*/}
       {selectedArt && (
@@ -812,14 +811,3 @@ const Profile = () => {
 
 export default Profile;
 
-// const Profile = () => {
-
-//   return (
-//     <div className="min-h-screen bg-[#050505] text-white font-sans pb-24">
-//       {/*cover*/}
-
-//     </div>
-//   );
-// };
-
-// export default Profile;

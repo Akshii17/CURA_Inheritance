@@ -25,6 +25,8 @@ const AuctionCheckout = () => {
     return <div className="text-white p-10">Artwork not found</div>;
   }
 
+
+  //console.log(auction);
   const auctionObject = auction?.find(
     (item) => item.artID === artwork.artworkID
   );
@@ -92,9 +94,10 @@ const AuctionCheckout = () => {
 
       await tx.wait();
       toast.success("Bid Placed");
+      await fetchAuction();
 
       // Reset state
-      //show
+      setBidAmount("");
       setIsLoading(false);
     } catch (error) {
       console.log("error in bidding", error);
