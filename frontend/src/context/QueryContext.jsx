@@ -10,7 +10,7 @@ const QueryContext = createContext(null);
 export const useQueryContext = () => useContext(QueryContext);
 
 
-const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-2/version/latest";
+const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
 
 
 export const QueryContextProvider = ({ children }) => {
@@ -46,9 +46,6 @@ export const QueryContextProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-        fetchArtists();
-    }, []);
 
     for (const artist of dup_artists) {
         if (!seenArtist.has(artist?.artistAddress?.toLowerCase())) {
@@ -67,9 +64,6 @@ export const QueryContextProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-        fetchArtworks();
-    }, []);
 
     for (const art of dup_artworks) {
         if (!seen.has(art.artworkID)) {
@@ -89,11 +83,6 @@ export const QueryContextProvider = ({ children }) => {
     };
 
 
-    useEffect(() => {
-        fetchDS();
-    }, []);
-
-
     //fetch Auction
      const fetchAuction = async () => {
         try {
@@ -104,9 +93,14 @@ export const QueryContextProvider = ({ children }) => {
         }
     };
 
+    
+
 
     useEffect(() => {
+        fetchArtworks();
+        fetchDS();
         fetchAuction();
+        fetchArtists();    
     }, []);
 
     for (const auc of dup_auction) {
@@ -120,10 +114,11 @@ export const QueryContextProvider = ({ children }) => {
     //fetch Liked Art
     const fetchLikedArtworks = async () => {
         try {
+            if (!artist?.artistAddress) return;
             
             const data = await request(GRAPHQL_ENDPOINT, GET_LIKED_ARTWORKS,
                 {
-                user: artist.artistAddress.toLowerCase()
+                user: artist?.artistAddress?.toLowerCase()
             });
             setLikedArtworks(data.artworkLikeds);
         } catch (err) {
@@ -133,6 +128,7 @@ export const QueryContextProvider = ({ children }) => {
 
 
     useEffect(() => {
+
         fetchLikedArtworks();
     }, [artist]);
 
@@ -160,16 +156,4 @@ export const QueryContextProvider = ({ children }) => {
         </QueryContext.Provider>
     );
 
-
-
-
 }
-
-
-
-
-
-
-
-
-

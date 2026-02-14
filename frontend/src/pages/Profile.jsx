@@ -275,46 +275,39 @@ const Profile = () => {
         coverImage: URL.createObjectURL(e.target.files[0]),
       });
   };
-  const saveProfile = () => {
-    setProfileData(editFormData);
-    setIsEditing(false);
-  };
-  const handleCreateChange = (e) =>
-    setCreateForm({ ...createForm, [e.target.name]: e.target.value });
-  const handleCreateImageUpload = (e) => {
-    if (e.target.files[0])
-      setCreateForm({
-        ...createForm,
-        imageSrc: URL.createObjectURL(e.target.files[0]),
-      });
-  };
-  const toggleCreateTag = (tag) => {
-    createTags.includes(tag)
-      ? setCreateTags(createTags.filter((t) => t !== tag))
-      : setCreateTags([...createTags, tag]);
-  };
-  const handleCustomTagAdd = (e) => {
-    if (e.key === "Enter" && customTagInput.trim()) {
-      if (!createTags.includes(customTagInput.trim()))
-        setCreateTags([...createTags, customTagInput.trim()]);
-      setCustomTagInput("");
+  const handleEditDetails = async () => {
+    try {
+      setIsLoading(true);
+
+      if (!isConnected || !address || !contract) return;
+
+      const { name, username, about, tagline } = editFormData;
+
+      const tx = await contract.editDetails(
+        name,
+        username,
+        "",          // newPfpHash (replace later if needed)
+        about,
+        tagline
+      );
+
+      await tx.wait();
+
+      toast.success("Details Edited Successfully");
+
+      // Update profileData with new values
+      setProfileData(editFormData);
+
+      setIsEditing(false);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error editing details", error);
+      toast.error("Something went wrong, Please try again later");
+      setIsLoading(false);
     }
   };
 
-  const submitArtwork = () => {
-    if (!createForm.title || !createForm.imageSrc)
-      return alert("Please provide at least a title and an image.");
-    alert("Artwork Created! (It will appear in your backend)");
-    setShowCreateModal(false);
-    setCreateForm({
-      title: "",
-      description: "",
-      price: "",
-      royalty: "",
-      imageSrc: null,
-    });
-    setCreateTags([]);
-  };
+
 
   const deleteNotification = (id) => {
     setNotifications(notifications.filter((n) => n.id !== id));
@@ -471,7 +464,7 @@ const Profile = () => {
                     <input
                       type="file"
                       ref={profileFileRef}
-                      onChange={handleProfileImageChange}
+
                       className="hidden"
                       accept="image/*"
                     />
@@ -491,7 +484,7 @@ const Profile = () => {
                     <X size={16} /> Cancel
                   </button>
                   <button
-                    onClick={saveProfile}
+                    onClick={handleEditDetails}
                     className="bg-white text-black border-none px-6 py-2.5 rounded-full font-bold text-sm cursor-pointer flex items-center gap-2"
                   >
                     <Save size={16} /> Save Changes
@@ -581,6 +574,16 @@ const Profile = () => {
                 />
 
                 <label className="block text-xs text-[#888] mb-1.5 font-semibold">
+                  Username
+                </label>
+                <input
+                  className="bg-white/5 border border-[#333] text-white p-3 rounded-lg w-full mb-3 text-xl font-bold focus:outline-none"
+                  name="username"
+                  value={displayData.username}
+                  onChange={handleProfileChange}
+                />
+
+                <label className="block text-xs text-[#888] mb-1.5 font-semibold">
                   Tagline
                 </label>
                 <input
@@ -591,7 +594,7 @@ const Profile = () => {
                 />
 
                 <label className="block text-xs text-[#888] mb-1.5 font-semibold">
-                  Bio
+                  About
                 </label>
                 <textarea
                   className="bg-white/5 border border-[#333] text-white p-3 rounded-lg w-full min-h-[100px] mb-3 text-sm font-sans focus:outline-none"
@@ -599,31 +602,6 @@ const Profile = () => {
                   value={displayData.about}
                   onChange={handleProfileChange}
                 />
-
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <label className="block text-xs text-[#888] mb-1.5 font-semibold">
-                      Location
-                    </label>
-                    <input
-                      className="bg-white/5 border border-[#333] text-white p-3 rounded-lg w-full mb-3 text-sm focus:outline-none"
-                      name="location"
-                      value={displayData.location}
-                      onChange={handleProfileChange}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs text-[#888] mb-1.5 font-semibold">
-                      Website
-                    </label>
-                    <input
-                      className="bg-white/5 border border-[#333] text-white p-3 rounded-lg w-full mb-3 text-sm focus:outline-none"
-                      name="website"
-                      value={displayData.website}
-                      onChange={handleProfileChange}
-                    />
-                  </div>
-                </div>
               </>
             ) : (
               <>
@@ -713,7 +691,7 @@ const Profile = () => {
           {/* grid */}
           <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 gap-2">
             {filteredArtworks.map((art) => (
-              <div
+              <Link to={`/art/${art.artworkID}`}
                 key={art.id}
                 className="
           relative
@@ -748,9 +726,9 @@ const Profile = () => {
             flex items-center justify-center
           "
                 >
-                  <Link to={`/art/${art.artworkID}`} className="text-xs font-semibold text-white">View</Link>
+                  <span className="text-xs font-semibold text-white">View</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -810,4 +788,3 @@ const Profile = () => {
 };
 
 export default Profile;
-

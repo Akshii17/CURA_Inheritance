@@ -21,7 +21,50 @@ const Explore = () => {
 
   let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
+  const [owners, setOwners] = useState({});
 
+  useEffect(() => {
+    const fetchOwners = async () => {
+      if (!contract || artworks.length === 0) return;
+
+      const ownershipMap = {};
+
+      for (const art of artworks) {
+        try {
+          const owner = await contract.checkOwnership(art.artworkID);
+          ownershipMap[art.artworkID] = owner.toLowerCase();
+        } catch (err) {
+          console.error("Error fetching owner:", err);
+        }
+      }
+
+      setOwners(ownershipMap);
+    };
+
+    fetchOwners();
+  }, [contract, artworks]);
+
+  console.log(owners);
+
+  const ownersLoaded = Object.keys(owners).length === artworks.length;
+
+  // if (!ownersLoaded) {
+  //   return <div className="text-white">Loading artworks...</div>;
+  // }
+
+
+
+  // const new_artworks = ownersLoaded
+  //   ? artworks.filter((art) => {
+  //     const owner = owners[String(art.artworkID)];
+  //     return (
+  //       loggedArtistAddress &&
+  //       owner &&
+  //       loggedArtistAddress !== owner &&
+  //       art.saleType !== ""
+  //     );
+  //   })
+  //   : [];
 
 
   const filteredArtData = artworks.filter((art) => {

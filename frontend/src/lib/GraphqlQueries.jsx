@@ -86,7 +86,21 @@ export const GET_LIKED_ARTWORKS = gql`
       orderDirection: desc
   ) {
     artWorkID
-    
+  }
+  }
+`;
+
+export const GET_BID_HISTORY = gql`
+  query GetBids ($aucID: BigInt!){
+    bidPlaceds (
+    where : {auctionID : $aucID}
+    orderBy :blockTimestamp
+    orderDirection : desc
+  ){
+    auctionID
+    bid
+    bidder
+    blockTimestamp
   }
   }
 `;

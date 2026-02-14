@@ -171,8 +171,8 @@ const ArtistProfile = () => {
                     {/* grid */}
                     <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 gap-2">
                         {filteredArtworks.map((art) => (
-                            <div
-                                key={art.id}
+                            <Link to={`/art/${art.artworkID}`}
+                                key={art.artworkID}
                                 className="
           relative
           aspect-square
@@ -206,9 +206,9 @@ const ArtistProfile = () => {
             flex items-center justify-center
           "
                                 >
-                                    <Link to={`/art/${art.artworkID}`} className="text-xs font-semibold text-white">View</Link>
+                                    <span className="text-xs font-semibold text-white">View</span>
                                 </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
 

@@ -10,7 +10,7 @@ import { useArtistContext } from '../context/ArtistContext';
 
 const Studio = () => {
 
- 
+
   const { artist, contract } = useArtistContext();
   const { artworks, likedArtworks } = useQueryContext();
 
@@ -23,27 +23,27 @@ const Studio = () => {
   const [status, setStatus] = useState(null);
 
   const [owners, setOwners] = useState({});
-  
-    useEffect(() => {
-      const fetchOwners = async () => {
-        if (!contract || artworks.length === 0) return;
-  
-        const ownershipMap = {};
-  
-        for (const art of artworks) {
-          try {
-            const owner = await contract.checkOwnership(art.artworkID);
-            ownershipMap[art.artworkID] = owner.toLowerCase();
-          } catch (err) {
-            console.error("Error fetching owner:", err);
-          }
+
+  useEffect(() => {
+    const fetchOwners = async () => {
+      if (!contract || artworks.length === 0) return;
+
+      const ownershipMap = {};
+
+      for (const art of artworks) {
+        try {
+          const owner = await contract.checkOwnership(art.artworkID);
+          ownershipMap[art.artworkID] = owner.toLowerCase();
+        } catch (err) {
+          console.error("Error fetching owner:", err);
         }
-  
-        setOwners(ownershipMap);
-      };
-  
-      fetchOwners();
-    }, [contract, artworks]);
+      }
+
+      setOwners(ownershipMap);
+    };
+
+    fetchOwners();
+  }, [contract, artworks]);
 
   //Art in Your Art
   const myArt = artworks.filter(
@@ -52,28 +52,45 @@ const Studio = () => {
 
   //filters in Your Art
   const filteredArt = myArt.filter((art) => {
-    if (!status) return true;     
-    return art.status === status; // ??????????????????????????
+    let art_status = "";
+    const owner = owners[art.artworkID]
+
+    if (owner !== art.originalArtist) {
+      art_status = "Sold";
+    }
+    else if (owner === art.originalArtist && art.saleType === "auction") {
+      art_status = "Live";
+    }
+    else if (owner === art.originalArtist && art.saleType === "direct") {
+      art_status = "Up for Sale";
+    }
+    else if (owner === art.originalArtist && art.available === true) {
+      art_status = "Unsold";
+    }
+
+    if (!status) return true;
+    return art_status === status;
   });
 
+
   //Art in Purchased
-  const purchasedArt = artworks.filter( (art) => {
+  const purchasedArt = artworks.filter((art) => {
     const owner = owners[art.artworkID];
-    return(
-    owner === loggedArtistAddress &&
-    art.originalArtist?.toLowerCase() !== loggedArtistAddress)
-});
+    return (
+      owner === loggedArtistAddress &&
+      art.originalArtist?.toLowerCase() !== loggedArtistAddress)
+  });
 
   //Art in Favorites
   const likedArt = artworks.filter(art =>
-  likedArtworks.some(liked => liked.artWorkID === art.artworkID)
-); 
-  
+    likedArtworks.some(liked => liked.artWorkID === art.artworkID)
+  );
+
 
   //filters in Favorites
   const filteredLikedArt = likedArt.filter((art) => {
-    if (!status) return true;     
-    return art.status === "Up for Sale" || art.status === "Live";
+    if (!status) return true;
+    return art.saleType === "direct" || art.saleType === "auction";
   });
 
   const isForSaleActive = status === "Up for Sale";
@@ -104,11 +121,10 @@ const Studio = () => {
                 className="relative flex justify-center pb-4 text-sm tracking-wide"
               >
                 <span
-                  className={`transition-colors ${
-                    isActive
+                  className={`transition-colors ${isActive
                       ? "text-white"
                       : "text-white/50 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {label}
                 </span>
@@ -145,7 +161,7 @@ const Studio = () => {
                   key={item}
                   onClick={() => setStatus(isActive ? null : item)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
-                    ${ isActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600" }`}
+                    ${isActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600"}`}
                 >
                   {item}
 
@@ -167,12 +183,12 @@ const Studio = () => {
                 No artworks yet
               </p>
             ) : (
-              <ArtGrid artworks={myArt} />
+              <ArtGrid artworks={filteredArt} />
             )}
           </div>
         </div>
       )}
-      
+
       {activeTab === 1 && (
         purchasedArt.length === 0 ? (
           <p className="text-gray-500 text-lg text-center mt-10">
@@ -190,27 +206,27 @@ const Studio = () => {
           </p>
         ) : (
           <>
-          <button
-            onClick={() => setStatus(isForSaleActive ? null : "Up for Sale")}
-                  className={`flex mt-6 items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
-                    ${ isForSaleActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600" }`}
-                >
-                  For Sale
+            <button
+              onClick={() => setStatus(isForSaleActive ? null : "Up for Sale")}
+              className={`flex mt-6 items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
+                    ${isForSaleActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600"}`}
+            >
+              For Sale
 
-                  {isForSaleActive && (
-                    <X
-                      size={14}
-                      className="opacity-70 hover:opacity-100"
-                    />
-                  )}
-          </button>
-          {console.log(likedArt)}
-          <ArtGrid artworks={likedArt} />
+              {isForSaleActive && (
+                <X
+                  size={14}
+                  className="opacity-70 hover:opacity-100"
+                />
+              )}
+            </button>
+            
+            <ArtGrid artworks={filteredLikedArt} />
           </>
         )
       )}
 
-      
+
     </div>
   )
 }

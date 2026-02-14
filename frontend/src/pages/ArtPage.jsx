@@ -6,12 +6,18 @@ import toast from "react-hot-toast";
 import { ethers } from "ethers";
 import { Link } from "react-router-dom";
 import Modal from "../components/Modal";
+import { GET_BID_HISTORY } from "../lib/GraphqlQueries";
+import { request, gql } from "graphql-request";
 
 const ArtPage = () => {
+
+  const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
+
 
   const [open, setOpen] = useState(false);
   const [currentOwner, setCurrentOwner] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [bids, setBids] = useState([]);
 
   const { artist, contract, isConnected, address } = useArtistContext();
 
@@ -58,6 +64,28 @@ const ArtPage = () => {
   console.log(priceInEth)
 
   let loggedArtistAddress = artist.artistAddress.toLowerCase();
+
+  const fetchBids = async () => {
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_BID_HISTORY,
+        {
+          aucID: AuctionID
+        });
+      console.log("Graph response:", data);
+      setBids(data.bidPlaceds);
+    } catch (err) {
+      console.log(err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!AuctionID) return;
+    fetchBids();
+  }, [auctionObject]);
+
+ 
+    console.log("BIDS UPDATED:", bids);
+  
 
   useEffect(() => {
     const fetchOwner = async () => {
