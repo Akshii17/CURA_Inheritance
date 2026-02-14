@@ -104,3 +104,16 @@ export const GET_BID_HISTORY = gql`
   }
   }
 `;
+
+export const GET_WITHDRAWAL_INFO = gql`
+  query GetWithdrawals ($user : Bytes!){
+  bidPlaceds(where: {bidder : $user }, 
+    orderBy: auctionID, 
+    orderDirection: asc) {
+    auctionID
+    bid
+    bidder
+    blockTimestamp
+  }
+}
+`;

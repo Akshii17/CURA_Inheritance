@@ -5,24 +5,13 @@ import { useQueryContext } from "../context/QueryContext";
 import { axiosInstance } from "../lib/axiosInstance";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import {
-  User,
-  Hexagon,
-  Share,
-  X,
-  Save,
-  Camera,
-  Heart,
-  MessageCircle,
-  Plus,
-  Upload,
-  Bell,
-  MapPin,
-  Link as LinkIcon,
-  Calendar,
-} from "lucide-react";
+import { request, gql } from "graphql-request";
+import { GET_WITHDRAWAL_INFO } from "../lib/GraphqlQueries";
+import { User, Share, X, Save, Camera, Heart, MessageCircle, Plus, Upload, Bell, MapPin, Link as LinkIcon, Calendar } from "lucide-react";
 
 const Profile = () => {
+  const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
+
   const { contract, address, isConnected, artist, fetchArtist } = useArtistContext();
   const { artworks, fetchArtworks, artists } = useQueryContext();
 
@@ -34,6 +23,7 @@ const Profile = () => {
   );
 
   const [owners, setOwners] = useState({});
+  const [withdrawalInfo, setWithdrawalInfo] = useState([]);
 
   useEffect(() => {
     const fetchOwners = async () => {
@@ -56,7 +46,26 @@ const Profile = () => {
     fetchOwners();
   }, [contract, artworks]);
 
+  const fetchWithdrawalInfo = async () => {
+    try {
 
+      const data = await request(GRAPHQL_ENDPOINT, GET_WITHDRAWAL_INFO,
+        {
+          user: loggedArtistAddress
+        });
+      setWithdrawalInfo(data.bidPlaceds);
+    } catch (err) {
+      console.log(err.message);
+    }
+  };
+
+  console.log("PENDING WITHDRAWALS:", withdrawalInfo);
+
+
+  useEffect(() => {
+
+    fetchWithdrawalInfo();
+  }, []);
 
 
 

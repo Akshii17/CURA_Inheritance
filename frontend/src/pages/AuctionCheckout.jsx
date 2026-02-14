@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { Clock, Gavel } from "lucide-react";
 import { ethers } from "ethers";
@@ -7,6 +7,8 @@ import { useQueryContext } from "../context/QueryContext";
 import toast from "react-hot-toast";
 
 const AuctionCheckout = () => {
+
+  const navigate = useNavigate(); //???????????????????????????????????????????????
 
   const { contract, address, isConnected } = useArtistContext();
   const { artworks, fetchArtworks, auction } = useQueryContext();
@@ -95,13 +97,14 @@ const AuctionCheckout = () => {
       await tx.wait();
       toast.success("Bid Placed");
       await fetchAuction();
+      navigate(-1);
 
       // Reset state
       setBidAmount("");
       setIsLoading(false);
     } catch (error) {
       console.log("error in bidding", error);
-      toast.error("Something went wrong, Please try again later");
+      //toast.error("Something went wrong, Please try again later");
       setIsLoading(false);
     }
   };
