@@ -38,6 +38,8 @@ const ArtPage = () => {
     (item) => item.artID === artwork.artworkID
   );
 
+  console.log(auctionObject);
+
   let aucBasePriceWei = auctionObject?.basePrice;
   const priceInEthAuc = aucBasePriceWei
     ? ethers.formatEther(aucBasePriceWei)
@@ -116,10 +118,34 @@ const ArtPage = () => {
     return () => clearInterval(interval);
   }, [artwork?.saleType]);
 
+  const getTimeRemaining = (auctionObj) => {
+  if (!auctionObj?.endTime) return undefined;
+
+  const now = Date.now();
+  const end = Number(auctionObj.endTime) * 1000;
+
+  const diff = end - now;
+  if (diff <= 0) return null;
+
+  const totalSeconds = Math.floor(diff / 1000);
+
+  const days = Math.floor(totalSeconds / (24 * 3600));
+  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return { days, hours, minutes, seconds };
+};
+
+
   const remainingTime = useMemo(
-    () => (artwork?.saleType === "auction" ? getTimeRemaining(auction.endDate) : null), //????????????
-    [artwork, tick]
-  );
+  () =>
+    artwork?.saleType === "auction"
+      ? getTimeRemaining(auctionObject)
+      : null,
+  [auctionObject, tick]
+);
+
 
   if (!artwork) return <div className="p-10 text-[#F3E5AB] bg-[#050505] min-h-screen">Art not found</div>;
 
@@ -355,17 +381,6 @@ const ArtPage = () => {
       />
     </div>
   );
-};
-
-const getTimeRemaining = (endDate) => {
-  if (!endDate) return null;
-  const diff = new Date(endDate) - new Date();
-  if (diff <= 0) return null;
-  return {
-    hours: Math.floor((diff % (24 * 3600 * 1000)) / (3600 * 1000)),
-    minutes: Math.floor((diff % (3600 * 1000)) / (60 * 1000)),
-    seconds: Math.floor((diff % (60 * 1000)) / 1000),
-  };
 };
 
 export default ArtPage;

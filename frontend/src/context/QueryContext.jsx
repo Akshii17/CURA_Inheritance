@@ -1,159 +1,197 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { request, gql } from "graphql-request";
-import { GET_ARTWORKS, GET_AUCTIONS, GET_DS, GET_ARTISTS, GET_LIKED_ARTWORKS } from "../lib/GraphqlQueries";
+import { request } from "graphql-request";
+import {
+  GET_ARTWORKS,
+  GET_AUCTIONS,
+  GET_DS,
+  GET_ARTISTS,
+  GET_LIKED_ARTWORKS,
+  GET_FOLLOWING_LIST
+} from "../lib/GraphqlQueries";
 import { useArtistContext } from "./ArtistContext";
-
-
-
 
 const QueryContext = createContext(null);
 export const useQueryContext = () => useContext(QueryContext);
 
-
-const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
-
+const GRAPHQL_ENDPOINT =
+  "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
 
 export const QueryContextProvider = ({ children }) => {
+  const { artist, contract } = useArtistContext();
 
-  const { artist } = useArtistContext();
+  const [artworks, setArtworks] = useState([]);
+  const [artists, setArtists] = useState([]);
+  const [auction, setAuction] = useState([]);
+  const [DS, setDS] = useState([]);
+  const [likedArtworks, setLikedArtworks] = useState([]);
+  const [owners, setOwners] = useState({});
+  const [following, setFollowing] = useState([]);
+  const [error, setError] = useState(null);
 
+  // 🔥 HELPERS
 
-
-    // artworks
-    const [dup_artworks, setArtworks] = useState([]);
-    const [dup_artists, setArtists] = useState([]);
-    const [DS, setDS] = useState([]);
-    const [dup_auction, setAuction] = useState([]);
-    const [likedArtworks, setLikedArtworks] = useState([]);
-    const [error, setError] = useState(null);
-
-    const seenArtist = new Set();
-    const artists = [];
-
+  const dedupeByKey = (array, key) => {
     const seen = new Set();
-    const artworks = [];
+    return array.filter((item) => {
+      if (seen.has(item[key])) return false;
+      seen.add(item[key]);
+      return true;
+    });
+  };
 
-    const seenAuc = new Set();
-    const auction = [];
+  // 🔥 FETCH FUNCTIONS
 
-    //fetch artists
-    const fetchArtists = async () => {
-        try {
-            const data = await request(GRAPHQL_ENDPOINT, GET_ARTISTS);
-            setArtists(data.artistStates);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
+  const fetchArtworks = async () => {
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_ARTWORKS);
+      const unique = dedupeByKey(data.artworkStates, "artworkID");
+      setArtworks(unique);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchArtists = async () => {
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_ARTISTS);
+      const unique = dedupeByKey(
+        data.artistStates.map((a) => ({
+          ...a,
+          artistAddress: a.artistAddress?.toLowerCase(),
+        })),
+        "artistAddress"
+      );
+      setArtists(unique);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchAuction = async () => {
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_AUCTIONS);
+      const unique = dedupeByKey(data.auctionStates, "artID");
+      setAuction(unique);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchDS = async () => {
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_DS);
+      setDS(data.dsstates);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchLikedArtworks = async () => {
+    try {
+      if (!artist?.artistAddress) return;
+
+      const data = await request(GRAPHQL_ENDPOINT, GET_LIKED_ARTWORKS, {
+        user: artist.artistAddress.toLowerCase(),
+      });
+
+      setLikedArtworks(data.artworkLikeds);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const fetchFollowingList = async () => {
+    console.log("hey");
+
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_FOLLOWING_LIST, {
+        user: artist.artistAddress.toLowerCase()
+      });
+      console.log(data.follows);
+      console.log(1);
+      setFollowing(data.follows);
+    } catch (err) {
+      console.log(err);
+
+      setError(err.message);
+    }
+  };
 
 
-    for (const artist of dup_artists) {
-        if (!seenArtist.has(artist?.artistAddress?.toLowerCase())) {
-            seenArtist.add(artist.artistAddress.toLowerCase());
-            artists.push(artist);
-        }
+  // 🔥 OWNERS FETCH (PARALLEL)
+
+  const fetchOwners = async () => {
+    if (!contract || artworks.length === 0) return;
+
+    try {
+      const ownershipMap = {};
+
+      const promises = artworks.map(async (art) => {
+        const owner = await contract.checkOwnership(art.artworkID);
+        ownershipMap[art.artworkID] = owner.toLowerCase();
+      });
+
+      await Promise.all(promises);
+      console.log(ownershipMap);
+
+      setOwners(ownershipMap);
+    } catch (err) {
+      console.error("Owner fetch error:", err);
+    }
+  };
+
+  // =========================
+  // 🔥 EFFECTS
+  // =========================
+
+  // Load Graph data on mount
+  useEffect(() => {
+    fetchArtworks();
+    fetchArtists();
+    fetchAuction();
+    fetchDS();
+  }, []);
+
+  // Load owners when artworks + contract ready
+  useEffect(() => {
+    if (!contract || artworks.length === 0) return;
+    fetchOwners();
+  }, [contract, artworks]);
+
+  // Load liked when artist changes
+  useEffect(() => {
+    if(artist){
+
+      fetchLikedArtworks();
+      fetchFollowingList();
     }
 
-    //fetch artworks
-    const fetchArtworks = async () => {
-        try {
-            const data = await request(GRAPHQL_ENDPOINT, GET_ARTWORKS);
-            setArtworks(data.artworkStates);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
+  }, [artist]);
 
+  // =========================
+  // 🔥 PROVIDER
+  // =========================
 
-    for (const art of dup_artworks) {
-        if (!seen.has(art.artworkID)) {
-            seen.add(art.artworkID);
-            artworks.push(art);
-        }
-    }
+  return (
+    <QueryContext.Provider
+      value={{
+        artworks,
+        artists,
+        auction,
+        DS,
+        likedArtworks,
+        owners,
+        error,
+        following,
 
-    // fetch DS
-    const fetchDS = async () => {
-        try {
-            const data = await request(GRAPHQL_ENDPOINT, GET_DS);
-            setDS(data.dsstates);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-
-    //fetch Auction
-     const fetchAuction = async () => {
-        try {
-            const data = await request(GRAPHQL_ENDPOINT, GET_AUCTIONS);
-            setAuction(data.auctionStates);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    
-
-
-    useEffect(() => {
-        fetchArtworks();
-        fetchDS();
-        fetchAuction();
-        fetchArtists();    
-    }, []);
-
-    for (const auc of dup_auction) {
-        if (!seenAuc.has(auc.artID)) {
-            seenAuc.add(auc.artID);
-            auction.push(auc);
-        }
-    }
-
-
-    //fetch Liked Art
-    const fetchLikedArtworks = async () => {
-        try {
-            if (!artist?.artistAddress) return;
-            
-            const data = await request(GRAPHQL_ENDPOINT, GET_LIKED_ARTWORKS,
-                {
-                user: artist?.artistAddress?.toLowerCase()
-            });
-            setLikedArtworks(data.artworkLikeds);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-
-    useEffect(() => {
-
-        fetchLikedArtworks();
-    }, [artist]);
-
-
-    return (
-        <QueryContext.Provider
-            value={{
-                artworks,
-                error,
-                DS,
-                auction,
-                artists,
-                likedArtworks,
-
-
-                fetchArtworks,
-                setArtworks,
-                fetchDS,
-                fetchAuction,
-                fetchArtists,
-                fetchLikedArtworks,
-            }}
-        >
-            {children}
-        </QueryContext.Provider>
-    );
-
-}
+        fetchArtworks,
+        fetchArtists,
+        fetchAuction,
+        fetchDS,
+        fetchLikedArtworks,
+      }}
+    >
+      {children}
+    </QueryContext.Provider>
+  );
+};

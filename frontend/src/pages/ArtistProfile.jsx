@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { User, MapPin, Link as LinkIcon, Calendar } from 'lucide-react';
+import { User, MapPin, Link as LinkIcon, Calendar,Check } from 'lucide-react';
 import { useArtistContext } from "../context/ArtistContext";
 import toast from 'react-hot-toast';
 import { ethers } from "ethers";
@@ -9,9 +9,19 @@ import { useQueryContext } from '../context/QueryContext';
 
 
 const ArtistProfile = () => {
-    const { contract, address, isConnected } = useArtistContext();
-    const { artists, artworks } = useQueryContext();
+    const { contract, address, isConnected, artist } = useArtistContext();
+    const { artists, artworks,following } = useQueryContext();
     const { id } = useParams();
+
+    let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
+
+    const [isFollowing, setIsFollowing] = useState(() => {
+        return following?.some(
+            (artist) => artist?.artist?.toLowerCase() === id.toLowerCase()
+        ) || false;
+    });
+
+    
 
     const artistData = artists.find(
         (artist) => artist?.artistAddress?.toLowerCase() === id.toLowerCase()
@@ -43,6 +53,7 @@ const ArtistProfile = () => {
             }
 
             console.log("following");
+            setIsFollowing((prev) => !prev);
 
             const follow = await contract.FollowUnfollow(checksumAddress);
 
@@ -50,6 +61,7 @@ const ArtistProfile = () => {
             toast.success("Following!");
 
         } catch (error) {
+            setIsFollowing((prev) => !prev);
             console.log("error in following", error);
             toast.error("Something went wrong, Please try again later");
         }
@@ -118,12 +130,22 @@ const ArtistProfile = () => {
                         {/*action buttons*/}
                         <div className="flex gap-3 pb-2.5 w-full md:w-auto justify-center flex-wrap">
 
-                            <button
-                                className=" text-white border border-white px-6 py-2.5 rounded-full font-bold text-sm cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform"
-                                onClick={handleFollow}
-                            >
-                                Follow
-                            </button>
+                            {isFollowing ? (
+                                <button
+                                    className="text-white border border-white px-6 py-2.5 rounded-full font-bold text-sm cursor-pointer flex items-center gap-2"
+                                    onClick={handleFollow}
+                                >
+                                     Following <Check/>
+                                </button>
+                            ) : (
+                                <button
+                                    className="text-white border border-white px-6 py-2.5 rounded-full font-bold text-sm cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform"
+                                    onClick={handleFollow}
+                                >
+                                    Follow
+                                </button>
+                            )}
+
 
                         </div>
                     </div>

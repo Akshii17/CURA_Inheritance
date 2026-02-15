@@ -117,3 +117,17 @@ export const GET_WITHDRAWAL_INFO = gql`
   }
 }
 `;
+
+export const GET_FOLLOWING_LIST = gql`
+  query GetFollowing ($user: Bytes!){
+    follows (where : {
+    follower : $user 
+    isFollowing : true
+  } orderBy: blockTimestamp
+    orderDirection: desc
+  ){
+    artist
+    blockTimestamp
+  }
+  }
+`;

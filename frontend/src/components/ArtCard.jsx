@@ -13,15 +13,15 @@ import { useQueryContext } from "../context/QueryContext";
 
 const ArtCard = ({ art, page }) => {
 
-  
+
 
   const { contract, address, isConnected, artist } = useArtistContext();
-  const { DS, auction, artists } = useQueryContext();
+  const { DS, auction, artists, fetchLikedArtworks, likedArtworks } = useQueryContext();
 
   const artistObject = artists?.find(
-  (item) =>
-    item?.artistAddress?.toLowerCase() === art?.originalArtist?.toLowerCase()
-);
+    (item) =>
+      item?.artistAddress?.toLowerCase() === art?.originalArtist?.toLowerCase()
+  );
 
 
 
@@ -32,8 +32,8 @@ const ArtCard = ({ art, page }) => {
 
   let DSpriceWei = dsObject?.price;
   const priceInEth = DSpriceWei
-  ? ethers.formatEther(DSpriceWei)
-  : "0";
+    ? ethers.formatEther(DSpriceWei)
+    : "0";
 
   const auctionObject = auction?.find(
     (item) => item.artID === art.artworkID
@@ -41,23 +41,28 @@ const ArtCard = ({ art, page }) => {
 
   let aucBasePriceWei = auctionObject?.basePrice;
   const priceInEthAuc = aucBasePriceWei
-  ? ethers.formatEther(aucBasePriceWei)
-  : "0";
+    ? ethers.formatEther(aucBasePriceWei)
+    : "0";
 
   let aucWinningPriceWei = auctionObject?.winningBid;
   const priceInEthWin = aucWinningPriceWei
-  ? ethers.formatEther(aucWinningPriceWei)
-  : "0";
+    ? ethers.formatEther(aucWinningPriceWei)
+    : "0";
 
-
-  const navigate = useNavigate();
+  //console.log(likedArtworks);
 
   let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
+  const [isFavorite, setIsFavorite] = useState(() => {
+    return likedArtworks?.some(
+      (item) => item.artworkID === art.artWorkID
+    ) || false;
+  });
 
-  const [isFavorite, setIsFavorite] = useState(false);
+
+
   const [tick, setTick] = useState(0);
-  
+
 
   useEffect(() => {
     if (art.saleType !== "auction") return;
@@ -70,35 +75,43 @@ const ArtCard = ({ art, page }) => {
   }, [art.saleType]);
 
 
-  const getTimeRemaining = (endDate) => {
-    const now = new Date();
-    const end = new Date(endDate);
-    const diff = end - now;
+  const getTimeRemaining = () => {
+  if (!auctionObject?.endTime) return undefined;
 
-    if (diff <= 0) {
-      return null; // auction ended
-    }
+  const now = Date.now();
 
-    const totalSeconds = Math.floor(diff / 1000);
+  // convert seconds → milliseconds
+  const end = Number(auctionObject.endTime) * 1000;
 
-    const days = Math.floor(totalSeconds / (24 * 3600));
-    const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
+  const diff = end - now;
 
-    return { days, hours, minutes, seconds };
-  };
+  if (diff <= 0) return null;
 
-  const timeRemaining = art.saleType === "auction" ? getTimeRemaining(art.endDate) : null;
+  const totalSeconds = Math.floor(diff / 1000);
 
-  const auctionEnded = art.saleType === "auction" && timeRemaining === null;
+  const days = Math.floor(totalSeconds / (24 * 3600));
+  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return { days, hours, minutes, seconds };
+};
+
+
+
+  const timeRemaining = art.saleType === "auction" ? getTimeRemaining() : null;
+
+  const auctionEnded = auctionObject?.ended;
+
+
   if (auctionEnded && page === "explore") {
     return null;
   }
 
-  const handleFavoriteClick = async(e) => {
+  const handleFavoriteClick = async (e) => {
     e.preventDefault();    // stops <Link>
     e.stopPropagation();  // stops bubbling
+
 
     try {
       if (!isConnected || !address || !contract) {
@@ -107,14 +120,16 @@ const ArtCard = ({ art, page }) => {
 
       console.log("liked", art.artworkID);
 
-      const like = await contract.LikeUnlike( art.artworkID );
-
+      setIsFavorite((prev) => !prev);
+      const like = await contract.LikeUnlike(art.artworkID);
       await like.wait();
 
-     // for red heart...change this
-      setIsFavorite((prev) => !prev);
+      // for red heart...change this
+
+      fetchLikedArtworks();
 
     } catch (error) {
+      setIsFavorite((prev) => !prev);
       console.log("error in liking", error);
       toast.error("Something went wrong, Please try again later");
     }
@@ -125,7 +140,7 @@ const ArtCard = ({ art, page }) => {
 
   return (
     <div className="block group">
-      
+
       {/* Image */}
       <Link to={`/art/${art.artworkID}`}>
         <div className="relative overflow-hidden rounded-lg bg-neutral-900 cursor-pointer">
@@ -214,14 +229,14 @@ const ArtCard = ({ art, page }) => {
         <div className="flex justify-between" >
           <div className=" space-y-1">
 
-            <Link to = {`/artist/${artistObject?.artistAddress}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
+            <Link to={`/artist/${artistObject?.artistAddress}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
   transition-all duration-300
   hover:decoration-gray-300 hover:text-gray-300">
-              By {artistObject.name} 
+              By {artistObject.name}
             </Link>
 
             <p className="text-sm text-gray-300">
-              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auctionObject.winningBid?priceInEthWin:priceInEthAuc} </span>}
+              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: {auctionObject.winningBid ? priceInEthWin : priceInEthAuc} </span>}
               {art.saleType === "direct" && <span className="text-gray-500">Price: {priceInEth} </span>}
               {"ETH"}
             </p>
@@ -229,7 +244,7 @@ const ArtCard = ({ art, page }) => {
         </div>
       </div>
     </div>
-    
+
   );
 };
 

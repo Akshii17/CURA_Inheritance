@@ -35,11 +35,56 @@ const App = () => {
 
   if (isLoading) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-red-900 text-white">
-      Loading...
+    <div className="fixed inset-0 z-[10000] flex flex-col items-center justify-center bg-black overflow-hidden">
+      
+      {/* BACKGROUND LAYER: Moving Stars */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="stars-container opacity-40" />
+      </div>
+
+      {/* CENTER CONTENT */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* THE GLOBE GIF */}
+        <div className="relative w-72 h-72 md:w-[500px] md:h-[500px] flex items-center justify-center">
+          <img 
+            src="/globe.gif" 
+            alt="Loading..." 
+            className="w-full h-full object-contain mix-blend-screen"
+          />
+          
+          {/* OPTIONAL: A soft purple radial glow behind the globe to give it depth */}
+          <div className="absolute inset-0 bg-purple-600/10 blur-[120px] rounded-full z-[-1]" />
+        </div>
+
+        {/* LOADING TEXT */}
+        <div className="mt-4 flex flex-col items-center">
+          <p className="text-[10px] uppercase tracking-[0.8em] text-purple-400/60 font-bold animate-pulse">
+            Loading
+          </p>
+        </div>
+      </div>
+
+      <style>{`
+        .stars-container {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background-image: 
+            radial-gradient(1px 1px at 25px 35px, #fff, rgba(0,0,0,0)),
+            radial-gradient(1.5px 1.5px at 50px 80px, #eee, rgba(0,0,0,0)),
+            radial-gradient(2px 2px at 100px 150px, #fff, rgba(0,0,0,0));
+          background-repeat: repeat;
+          background-size: 250px 250px;
+          animation: starsMove 150s linear infinite;
+        }
+        @keyframes starsMove {
+          from { transform: translateY(0); }
+          to { transform: translateY(-1000px); }
+        }
+      `}</style>
     </div>
   );
-  }
+}
 
 
 

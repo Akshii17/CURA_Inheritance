@@ -33,7 +33,7 @@ const AuctionCheckout = () => {
     (item) => item.artID === artwork.artworkID
   );
 
-  let AuctionID = auctionObject.auctionID;
+  let AuctionID = auctionObject?.auctionID;
 
   let aucBasePriceWei = auctionObject?.basePrice;
   const priceInEthAuc = aucBasePriceWei
@@ -59,14 +59,16 @@ const AuctionCheckout = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const getTimeRemaining = (endDate) => {
-    const now = new Date();
-    const end = new Date(endDate);
-    const diff = end - now;
+  const getTimeRemaining = () => {
+    let endTime = auctionObject?.endTime
+    if (!endTime) return undefined;
+
+    const diff = Number(endTime) * 1000 - Date.now();
 
     if (diff <= 0) return null;
 
     const totalSeconds = Math.floor(diff / 1000);
+
     return {
       days: Math.floor(totalSeconds / (24 * 3600)),
       hours: Math.floor((totalSeconds % (24 * 3600)) / 3600),
@@ -75,7 +77,8 @@ const AuctionCheckout = () => {
     };
   };
 
-  const time = getTimeRemaining(auctionObject.endDate);
+
+  const time = getTimeRemaining();
 
 
 
@@ -171,7 +174,7 @@ const AuctionCheckout = () => {
             <input
               value={bidAmount}
               onChange={(e) => setBidAmount(e.target.value)}
-              placeholder={`Enter at least ${auctionObject.winningBid != 0.0? priceInEthWin : priceInEthAuc}`}
+              placeholder={`Enter at least ${auctionObject.winningBid != 0.0 ? priceInEthWin : priceInEthAuc}`}
               className="w-full bg-black/40 rounded-xl px-4 py-3 outline-none"
             />
           </div>
@@ -191,7 +194,7 @@ const AuctionCheckout = () => {
                 type="checkbox"
                 checked={finalSaleChecked}
                 onChange={(e) => setFinalSaleChecked(e.target.checked)}
-                className="mt-1 accent-indigo-800"
+                className="mt-1 accent- bg-[#7C3AED]"
               />
               <span>
                 I understand that bids cannot be withdrawn until the auction ends
@@ -203,7 +206,7 @@ const AuctionCheckout = () => {
                 type="checkbox"
                 checked={ownershipChecked}
                 onChange={(e) => setOwnershipChecked(e.target.checked)}
-                className="mt-1 accent-indigo-800"
+                className="mt-1 accent- bg-[#7C3AED]"
               />
               <span>Ownership is transferred to the winner</span>
             </label>
@@ -213,7 +216,7 @@ const AuctionCheckout = () => {
           <button
             disabled={!canPay}
             onClick={handlePlaceBid}
-            className={`mt-auto w-full bg-indigo-600 hover:bg-indigo-800 text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
+            className={`mt-auto w-full  bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
               ${canPay
                 ? "hover:opacity-90 cursor-pointer"
                 : "opacity-30 cursor-not-allowed"

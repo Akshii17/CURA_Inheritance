@@ -10,69 +10,41 @@ import { useArtistContext } from "../context/ArtistContext";
 
 const Explore = () => {
 
-  const { artworks, fetchArtworks, contract } = useQueryContext();
-  const { artist, fetchArtist } = useArtistContext();
+  const { artworks, fetchArtworks, owners } = useQueryContext();
+  const { artist, fetchArtist, contract } = useArtistContext();
 
   const [saleType, setSaleType] = useState(null);
   const [genre, setGenre] = useState("all");
   const [sortBy, setSortBy] = useState("new");
   const [searchQuery, setSearchQuery] = useState("");
   const SALE_TYPES = ["auction", "direct"];
+  const [isOwnerLoading, setIsOwnerLoading] = useState(false);
+  const [newArtworks, setNewArtworks] = useState([]);
 
   let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
-  const [owners, setOwners] = useState({});
 
-  useEffect(() => {
-    const fetchOwners = async () => {
-      if (!contract || artworks.length === 0) return;
-
-      const ownershipMap = {};
-
-      for (const art of artworks) {
-        try {
-          const owner = await contract.checkOwnership(art.artworkID);
-          ownershipMap[art.artworkID] = owner.toLowerCase();
-        } catch (err) {
-          console.error("Error fetching owner:", err);
-        }
-      }
-
-      setOwners(ownershipMap);
-    };
-
-    fetchOwners();
-  }, [contract, artworks]);
-
-  console.log(owners);
-
-  const ownersLoaded = Object.keys(owners).length === artworks.length;
+  // const ownersLoaded = Object.keys(owners).length === artworks.length;
 
   // if (!ownersLoaded) {
   //   return <div className="text-white">Loading artworks...</div>;
   // }
 
+  useEffect(() => {
+    setNewArtworks(
+      artworks.filter((art) => {
+        const owner = owners[art.artworkID];
+        return (
+          loggedArtistAddress !== owner &&
+          art.saleType !== ""
+        );
+      })
+    );
+  }, [owners, artworks, loggedArtistAddress]);
 
 
-  // const new_artworks = ownersLoaded
-  //   ? artworks.filter((art) => {
-  //     const owner = owners[String(art.artworkID)];
-  //     return (
-  //       loggedArtistAddress &&
-  //       owner &&
-  //       loggedArtistAddress !== owner &&
-  //       art.saleType !== ""
-  //     );
-  //   })
-  //   : [];
-
-
-  const filteredArtData = artworks.filter((art) => {
+  const filteredArtData = newArtworks?.filter((art) => {
     if (saleType && art.saleType !== saleType) {
-      return false;
-    }
-
-    if (genre !== "all" && art.genre !== genre) {
       return false;
     }
 

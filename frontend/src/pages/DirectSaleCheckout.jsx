@@ -119,7 +119,7 @@ const DirectSaleCheckout = () => {
                 type="checkbox"
                 checked={finalSaleChecked}
                 onChange={(e) => setFinalSaleChecked(e.target.checked)}
-                className="mt-1 accent-indigo-800"
+                className="mt-1 accent-[#7C3AED]"
               />
               <span>
                 I understand this is a <b>final sale</b>
@@ -131,7 +131,7 @@ const DirectSaleCheckout = () => {
                 type="checkbox"
                 checked={ownershipChecked}
                 onChange={(e) => setOwnershipChecked(e.target.checked)}
-                className="mt-1 accent-indigo-800"
+                className="mt-1 accent-[#7C3AED]"
               />
               <span>Ownership transfer occurs after payment</span>
             </label>
@@ -157,7 +157,7 @@ const DirectSaleCheckout = () => {
           <button
             disabled={!canPay}
             onClick={handlePay}
-            className={`mt-auto w-full bg-indigo-600 hover:bg-indigo-800 text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
+            className={`mt-auto w-full bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
               ${canPay
                 ? "hover:opacity-90 cursor-pointer"
                 : "opacity-30 cursor-not-allowed"

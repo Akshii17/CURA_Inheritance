@@ -13,7 +13,7 @@ const Profile = () => {
   const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
 
   const { contract, address, isConnected, artist, fetchArtist } = useArtistContext();
-  const { artworks, fetchArtworks, artists } = useQueryContext();
+  const { artworks, fetchArtworks, artists, owners } = useQueryContext();
 
   const loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
@@ -21,30 +21,8 @@ const Profile = () => {
     (item) =>
       item?.artistAddress?.toLowerCase() === loggedArtistAddress
   );
-
-  const [owners, setOwners] = useState({});
   const [withdrawalInfo, setWithdrawalInfo] = useState([]);
 
-  useEffect(() => {
-    const fetchOwners = async () => {
-      if (!contract || artworks.length === 0) return;
-
-      const ownershipMap = {};
-
-      for (const art of artworks) {
-        try {
-          const owner = await contract.checkOwnership(art.artworkID);
-          ownershipMap[art.artworkID] = owner.toLowerCase();
-        } catch (err) {
-          console.error("Error fetching owner:", err);
-        }
-      }
-
-      setOwners(ownershipMap);
-    };
-
-    fetchOwners();
-  }, [contract, artworks]);
 
   const fetchWithdrawalInfo = async () => {
     try {
@@ -59,11 +37,10 @@ const Profile = () => {
     }
   };
 
-  console.log("PENDING WITHDRAWALS:", withdrawalInfo);
+  // console.log("PENDING WITHDRAWALS:", withdrawalInfo);
 
 
   useEffect(() => {
-
     fetchWithdrawalInfo();
   }, []);
 
@@ -105,6 +82,7 @@ const Profile = () => {
     },
   });
 
+
   const createArtwork = async (ipfsHash) => {
     try {
       if (!isConnected || !address || !contract) {
@@ -123,7 +101,7 @@ const Profile = () => {
 
       await tx.wait();
       toast.success("Artwork created successfully");
-
+      fetchArtworks();
       // Reset state
       setShowCreateModal(false);
       setDescription("");
@@ -170,6 +148,7 @@ const Profile = () => {
 
   //kachra *****************************************************
 
+
   const INITIAL_USER = {
     name: artistObject.name,
     username: artistObject.username,
@@ -183,7 +162,6 @@ const Profile = () => {
     coverImage:
       "https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg", //
   };
-
 
 
   const [collectionFilter, setCollectionFilter] = useState("your");
@@ -230,43 +208,18 @@ const Profile = () => {
   ];
 
 
-
-  const PREDEFINED_TAGS = [
-    "Abstract",
-    "3D Render",
-    "Photography",
-    "Surrealism",
-    "Cyberpunk",
-    "Minimalist",
-    "Portrait",
-  ];
-  const NAV_ITEMS = ["Home", "Explore", "Studio", "Analytics"];
-  const navigate = useNavigate();
-  const location = useLocation();
   const profileFileRef = useRef(null);
   const coverFileRef = useRef(null);
-  const createFileRef = useRef(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [showNotifs, setShowNotifs] = useState(false);
   const [selectedArt, setSelectedArt] = useState(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [profileData, setProfileData] = useState(INITIAL_USER);
   const [editFormData, setEditFormData] = useState(INITIAL_USER);
   const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
 
-  const [createForm, setCreateForm] = useState({
-    title: "",
-    description: "",
-    price: "",
-    royalty: "",
-    imageSrc: null,
-  });
-  const [createTags, setCreateTags] = useState([]);
-  const [customTagInput, setCustomTagInput] = useState("");
 
-  const isActive = (path) => location.pathname === path;
 
   const handleProfileChange = (e) =>
     setEditFormData({ ...editFormData, [e.target.name]: e.target.value });
@@ -284,6 +237,8 @@ const Profile = () => {
         coverImage: URL.createObjectURL(e.target.files[0]),
       });
   };
+
+  
   const handleEditDetails = async () => {
     try {
       setIsLoading(true);
@@ -366,7 +321,7 @@ const Profile = () => {
             />
 
             {imagePreview && (
-              <img src={imagePreview} className="mt-3 rounded-xl h-[200px] w-[200px]" />
+              <img src={imagePreview} className="mt-3 rounded-xl h-50 w-50" />
             )}
 
             {/* TITLE */}
@@ -423,13 +378,13 @@ const Profile = () => {
         </div>
       )}
 
-      <div className="h-[180px] md:h-[280px] w-full relative overflow-hidden rounded-b-3xl -mb-[60px] md:-mb-[80px]">
+      <div className="h-45 md:h-70 w-full relative overflow-hidden rounded-b-3xl -mb-15 md:-mb-20">
         <img
           src={displayData.coverImage}
           alt="Cover"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#050505] to-transparent" />
         {isEditing && (
           <button
             className="absolute top-5 right-5 bg-black/60 text-white border border-white/20 rounded-2xl px-4 py-2 text-xs cursor-pointer backdrop-blur-sm flex items-center gap-1.5"
@@ -446,13 +401,13 @@ const Profile = () => {
           </button>
         )}
       </div>
-      <main className="max-w-[1000px] mx-auto px-5">
+      <main className="max-w-250 mx-auto px-5">
         {/*prof card*/}
         <div className="px-5 relative">
           {/* avatar and action rows*/}
           <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-6 gap-5 md:gap-0">
             <div className="relative">
-              <div className="w-[120px] h-[120px] md:w-[160px] md:h-[160px] rounded-full border-4 md:border-6 border-[#050505] overflow-hidden bg-[#1a1a1a] relative">
+              <div className="w-30 h-30 md:w-40 md:h-40 rounded-full border-4 md:border-6 border-[#050505] overflow-hidden bg-[#1a1a1a] relative">
                 {displayData.profileImage ? (
                   <img
                     src={displayData.profileImage}
@@ -514,11 +469,11 @@ const Profile = () => {
                     </button>
                     {showNotifs && (
                       /* Notifications Dropdown */
-                      <div className="absolute top-[50px] right-0 md:right-0 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 w-[280px] md:w-[340px] bg-[#1a1a1a] border border-[#333] rounded-2xl z-50 shadow-2xl overflow-hidden">
+                      <div className="absolute top-12.5 right-0 md:right-0 left-1/2 md:left-auto -translate-x-1/2 md:translate-x-0 w-70 md:w-85 bg-[#1a1a1a] border border-[#333] rounded-2xl z-50 shadow-2xl overflow-hidden">
                         <div className="p-4 border-b border-[#222] text-sm font-bold">
                           Notifications
                         </div>
-                        <div className="max-h-[300px] overflow-y-auto">
+                        <div className="max-h-75 overflow-y-auto">
                           {notifications.map((n) => (
                             <div
                               key={n.id}
@@ -569,7 +524,7 @@ const Profile = () => {
           </div>
 
           {/*prof info*/}
-          <div className="max-w-[600px] mt-2.5 text-center md:text-left w-full">
+          <div className="max-w-150 mt-2.5 text-center md:text-left w-full">
             {isEditing ? (
               <>
                 <label className="block text-xs text-[#888] mb-1.5 font-semibold">
@@ -606,7 +561,7 @@ const Profile = () => {
                   About
                 </label>
                 <textarea
-                  className="bg-white/5 border border-[#333] text-white p-3 rounded-lg w-full min-h-[100px] mb-3 text-sm font-sans focus:outline-none"
+                  className="bg-white/5 border border-[#333] text-white p-3 rounded-lg w-full min-h-25 mb-3 text-sm font-sans focus:outline-none"
                   name="about"
                   value={displayData.about}
                   onChange={handleProfileChange}
@@ -683,9 +638,7 @@ const Profile = () => {
               <button
                 key={item.value}
                 onClick={() => setCollectionFilter(item.value)}
-                className={`
-          px-4 py-1.5 rounded-md text-sm font-semibold
-          border transition-all
+                className={` px-4 py-1.5 rounded-md text-sm font-semibold border transition-all
           ${collectionFilter === item.value
                     ? "bg-white text-black border-white"
                     : "bg-transparent text-gray-400 border-white/10 hover:text-white hover:border-white/30"
@@ -709,7 +662,6 @@ const Profile = () => {
           rounded-md
           bg-neutral-900
           cursor-pointer
-          rounded-none
           group
         "
               >
@@ -753,17 +705,17 @@ const Profile = () => {
       {/*notif image popup*/}
       {selectedArt && (
         <div
-          className="fixed inset-0 bg-black/85 z-[2000] flex items-center justify-center p-10"
+          className="fixed inset-0 bg-black/85 z-2000 flex items-center justify-center p-10"
           onClick={() => setSelectedArt(null)}
         >
-          <button className="absolute top-5 right-5 bg-transparent border-none text-white cursor-pointer z-[2100]">
+          <button className="absolute top-5 right-5 bg-transparent border-none text-white cursor-pointer z-2100">
             <X size={32} />
           </button>
           <div
-            className="flex flex-col max-h-[90vh] max-w-[1000px] w-full bg-[#000] rounded-lg overflow-hidden relative border border-[#333]"
+            className="flex flex-col max-h-[90vh] max-w-250 w-full bg-black rounded-lg overflow-hidden relative border border-[#333]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-[#000] flex justify-center items-center flex-1 min-h-[300px]">
+            <div className="bg-black flex justify-center items-center flex-1 min-h-75">
               <img
                 src={selectedArt.src}
                 alt={selectedArt.title}
