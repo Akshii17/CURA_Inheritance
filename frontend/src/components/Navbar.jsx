@@ -8,7 +8,7 @@ import {
   User,
 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import logo from "../assets/logo.png";
+import curaa from "../assets/curaa.png";
 
 const baseLink =
   "relative flex items-center gap-2 text-white after:content-[''] after:absolute after:left-1/2 after:-bottom-1 after:h-[1px] after:w-full after:bg-white after:-translate-x-1/2 after:transition-transform after:duration-300";
@@ -23,7 +23,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <img src={logo} alt="logo" className="h-9" />
+            <img src={curaa} alt="logo" className="h-9" />
             <span className="hidden sm:block text-xl font-serif tracking-wide text-white">
               CURA
             </span>

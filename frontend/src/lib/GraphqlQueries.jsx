@@ -16,6 +16,7 @@ export const GET_ARTISTS = gql`
       blockNumber
       blockTimestamp
       bio
+      tagline
     }
   }
 `;

@@ -21,7 +21,7 @@ const ArtPage = () => {
 
   const { artist, contract, isConnected, address } = useArtistContext();
 
-  const { artworks, auction, DS } = useQueryContext();
+  const { artworks, auction, DS, artists } = useQueryContext();
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,6 +33,11 @@ const ArtPage = () => {
       (a) => String(a.artworkID) === String(id)
     );
   }, [artworks, id]);
+
+  const artistObject = artists?.find(
+    (item) =>
+      item?.artistAddress?.toLowerCase() === artwork?.originalArtist?.toLowerCase()
+  );
 
   const auctionObject = auction?.find(
     (item) => item.artID === artwork.artworkID
@@ -103,6 +108,13 @@ const ArtPage = () => {
 
     fetchOwner();
   }, [contract, artwork]);
+
+  const ownerObject = artists?.find(
+    (item) =>
+      item?.artistAddress?.toLowerCase() === currentOwner?.toLowerCase()
+  );
+
+  console.log(ownerObject);
 
 
   const [tick, setTick] = useState(0);
@@ -222,7 +234,10 @@ const ArtPage = () => {
                 </span>
                 <h1 className="text-5xl font-serif text-[#F3E5AB] mt-2 leading-tight">{artwork.artworkTitle}</h1>
                 <p className="text-sm text-neutral-400 mt-2">
-                  Original Artist: <span className="text-white font-medium">{artwork.originalArtist}</span>
+                  Original Artist: <span className="text-white font-medium">{artistObject?.name}</span>
+                </p>
+                <p className="text-sm text-neutral-400 mt-2">
+                  Seller: <span className="text-white font-medium">{ownerObject?.name}</span>
                 </p>
               </div>
 
@@ -295,7 +310,7 @@ const ArtPage = () => {
                 /* Creator Buttons */
                 <div className="flex flex-col gap-3">
                   {/* SELL ARTWORK */}
-                  {isCurrentlyForSale && (
+                  {isCurrentlyForSale && (currentOwner===loggedArtistAddress) && (
                     <button
                       onClick={() => setOpen(true)}
                       className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"

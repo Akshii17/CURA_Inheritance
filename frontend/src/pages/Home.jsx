@@ -27,16 +27,18 @@ const HomePage = () => {
   ];
 
   const ART_IMAGES = [
-    "https://media.istockphoto.com/id/814423752/photo/eye-of-model-with-colorful-art-make-up-close-up.jpg?s=612x612&w=0&k=20&c=l15OdMWjgCKycMMShP8UK94ELVlEGvt7GmB_esHWPYE=",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_alTprnk0UQiLsWsrH_TRsj1Um1clgkH7mw&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRuOZw7O50XynSd3dc1IMhUeP_NBqJ7_IpxNQ&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqsgnKDZ5Ar6MSTvcHgjLh-JX7tsr8OrHIhA&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy48aYtD2F1und2g31KjGLn7RbYWKLG6Tbow&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQy48aYtD2F1und2g31KjGLn7RbYWKLG6Tbow&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT2FNPsaIiMkXzhvmDCuMQHf6GuurECOp0gUg&s",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3ZvFjJZOID7WGiKOSS2VFYQ9YP6ZGwx6Vaw&s",
-    "https://i.ytimg.com/vi/KgsyDjarT8Q/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLD6271ELWGU4pMUVKlraElKKw-Adg"
+    "https://images.pexels.com/photos/5660017/pexels-photo-5660017.jpeg",
+    "https://images.pexels.com/photos/29586673/pexels-photo-29586673.jpeg",
+    "https://images.pexels.com/photos/1266808/pexels-photo-1266808.jpeg",
+    "https://images.pexels.com/photos/16738884/pexels-photo-16738884.jpeg",
+    "https://images.pexels.com/photos/33118047/pexels-photo-33118047.jpeg",
+    "https://images.pexels.com/photos/1616403/pexels-photo-1616403.jpeg",
+    "https://images.pexels.com/photos/2911521/pexels-photo-2911521.jpeg",
+    "https://images.pexels.com/photos/2860810/pexels-photo-2860810.jpeg",
+    "https://images.pexels.com/photos/1174000/pexels-photo-1174000.jpeg",
+    "https://images.pexels.com/photos/30829220/pexels-photo-30829220.jpeg"
   ];
+
   const AnimatedCounter = ({ from = 0, to, duration = 2 }) => {
     const nodeRef = useRef();
     const inView = useInView(nodeRef, { once: true, margin: "-50px" });
@@ -115,7 +117,7 @@ const HomePage = () => {
           
           <div style={{ textAlign: 'center', marginBottom: 50, zIndex: 20 }}>
             <div style={{ fontSize: 12, letterSpacing: 2, color: '#7c3AED', marginBottom: 10 }}>CURATED SELECTION</div>
-            <h2 style={{ fontSize: 48, fontFamily: 'var(--font-serif)', margin: 0, color: '#f2f0f5ff' }}>Featured Auctions</h2>
+            <h2 style={{ fontSize: 48, fontFamily: 'var(--font-serif)', margin: 0, color: '#F3E5AB' }}>Featured Auctions</h2>
           </div>
 
           <motion.div style={{ x, display: "flex", alignItems: 'center', width: 'max-content', paddingLeft: '0' }}>
@@ -142,7 +144,7 @@ const HomePage = () => {
       <div style={{ position: 'relative', width: '100%', height: 340, overflow: 'hidden' }}>
         <div className="image-zoom" style={{ backgroundImage: `url(${artwork.image})`, width: '100%', height: '100%', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         {isLive && (
-          <div style={{ position: 'absolute', top: 16, right: 16, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}>
+          <div style={{ position: 'absolute', top: 16, right: 16, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(10px)', padding: '6px 12px', borderRadius: 8, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid rgba(255,255,255,0.2)', color: '#F3E5AB' }}>
             <TrendingUp size={12} /> LIVE
           </div>
         )}
@@ -270,10 +272,10 @@ const HomePage = () => {
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1, background: `radial-gradient(circle 500px at ${mousePos.x}px ${mousePos.y}px, transparent 10%, rgba(5,5,5,0.85) 100%)` }} />
           <div style={{ maxWidth: 1400, width: '100%', margin: '0 auto', position: 'relative', zIndex: 10, textAlign: 'center' }}>
             <div style={{ display: 'inline-block', padding: '6px 20px', backgroundColor: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.3)', backdropFilter: 'blur(4px)', borderRadius: 30, fontSize: 10, letterSpacing: 2, marginBottom: 24, fontWeight: 600, textTransform: 'uppercase', color: '#7c3AED' }}>Decentralized Marketplace</div>
-            <h1 className="hero-title" style={{ fontSize: 72, fontWeight: 400, margin: '0 0 20px 0', letterSpacing: -2, lineHeight: 1.1, fontFamily: 'var(--font-serif)', color: '#fff', textShadow: '0 10px 30px rgba(0,0,0,0.9)' }}>Where Art Meets <br /><span style={{ fontStyle: 'italic', color: '#7c3AED' }}>Blockchain</span></h1>
+            <h1 className="hero-title" style={{ fontSize: 97, fontWeight: 400, margin: '0 0 20px 0', letterSpacing: -2, lineHeight: 1.1, fontFamily: 'var(--font-serif)', color: '#F3E5AB', textShadow: '0 10px 30px rgba(0,0,0,0.9)' }}>Where Art Meets <br /><span style={{ fontStyle: 'italic', color: '#7c3AED' }}>Blockchain</span></h1>
             <p style={{ fontSize: 18, color: '#e0e0e0', maxWidth: 600, margin: '0 auto 32px', lineHeight: 1.6, fontWeight: 300, textShadow: '0 4px 12px rgba(0,0,0,0.8)' }}>Discover extraordinary digital masterpieces. Bid, collect, and own pieces of art history.</p>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 40 }}>
-              <button onClick={() => navigate('/testing')} className="primary-btn" style={{ padding: '14px 32px', borderRadius: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 8px 30px rgba(147, 61, 179, 0.6)' }}>How it works <ArrowRight size={16} /></button>
+      
             </div>
           </div>
         </section>
@@ -309,7 +311,7 @@ const HomePage = () => {
         <section className="responsive-padding" style={{ padding: '0 60px 20px', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0) 100%)', position: 'relative' }}>
           <div style={{ maxWidth: 1400, margin: '0 auto', paddingTop: 80 }}>
             <div className="section-header" style={{ marginBottom: 56, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-              <div><div style={{ fontSize: 13, color: '#7c3AED', letterSpacing: 2, marginBottom: 16, fontWeight: 500 }}>HAPPENING NOW</div><h2 style={{ fontSize: 48, fontWeight: 400, margin: '0 0 12px 0', letterSpacing: -1, fontFamily: 'var(--font-serif)' }}>Live Auctions</h2></div>
+              <div><div style={{ fontSize: 13, color: '#7c3AED', letterSpacing: 2, marginBottom: 16, fontWeight: 500 }}>HAPPENING NOW</div><h2 style={{color:'#F3E5AB', fontSize: 48, fontWeight: 400, margin: '0 0 12px 0', letterSpacing: -1, fontFamily: 'var(--font-serif)' }}>Live Auctions</h2></div>
               <div className="filter-buttons" style={{ display: 'flex', gap: 12 }}>{['Trending', 'Recent', 'Ending Soon'].map((f, i) => <button key={f} className={i === 0 ? "primary-btn" : "secondary-btn"} style={{ padding: '12px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600 }}>{f}</button>)}</div>
             </div>
             <div className="art-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
@@ -324,7 +326,7 @@ const HomePage = () => {
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 600, height: 600, background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)', pointerEvents: 'none' }} />
           <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center', position: 'relative' }}>
             <div style={{ display: 'inline-block', padding: '8px 20px', backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 30, fontSize: 12, letterSpacing: 1.5, marginBottom: 32, fontWeight: 500 }}>JOIN THE COMMUNITY</div>
-            <h2 className="hero-title" style={{ fontSize: 64, fontWeight: 400, margin: '0 0 24px 0', letterSpacing: -2, lineHeight: 1.1, fontFamily: 'var(--font-serif)' }}>Begin Your Art<br />Collection Journey</h2>
+            <h2 className="hero-title" style={{ color:'#F3E5AB',fontSize: 64, fontWeight: 400, margin: '0 0 24px 0', letterSpacing: -2, lineHeight: 1.1, fontFamily: 'var(--font-serif)' }}>Begin Your Art<br />Collection Journey</h2>
             <div style={{ display: 'flex', gap: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
               <button onClick={() => navigate('/explore')} className="primary-btn" style={{ padding: '18px 40px', borderRadius: 12, fontSize: 16, display: 'flex', alignItems: 'center', gap: 10 }}>Explore Marketplace <ArrowRight size={18} /></button>
               <button onClick={() => navigate('/profile')} className="secondary-btn" style={{ padding: '18px 40px', borderRadius: 12, fontSize: 16, fontWeight: 700, cursor: 'pointer' }}>Create as Artist</button>

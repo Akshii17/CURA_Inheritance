@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 const AuctionCheckout = () => {
 
-  const navigate = useNavigate(); //???????????????????????????????????????????????
+  const navigate = useNavigate(); 
 
   const { contract, address, isConnected } = useArtistContext();
   const { artworks, fetchArtworks, auction } = useQueryContext();
@@ -85,6 +85,7 @@ const AuctionCheckout = () => {
   const handlePlaceBid = async () => {
     try {
       setIsLoading(true);
+      
 
       let stringBid = bidAmount.toString();
       let bidInWei = ethers.parseEther(stringBid);
@@ -100,7 +101,7 @@ const AuctionCheckout = () => {
       await tx.wait();
       toast.success("Bid Placed");
       await fetchAuction();
-      navigate(-1);
+      navigate(`/art/${artwork.artworkID}`);
 
       // Reset state
       setBidAmount("");

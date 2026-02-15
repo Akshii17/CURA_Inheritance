@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -8,6 +8,8 @@ import { useQueryContext } from "../context/QueryContext";
 import { ethers } from "ethers";
 
 const DirectSaleCheckout = () => {
+
+  const navigate = useNavigate(); 
 
   const { contract, address, isConnected } = useArtistContext();
   const { artworks, fetchArtworks, DS } = useQueryContext();
@@ -56,6 +58,7 @@ const DirectSaleCheckout = () => {
 
       await tx.wait();
       toast.success("Artwork purchased");
+      navigate(`/art/${artwork.artworkID}`);
 
       // Reset state
       //show

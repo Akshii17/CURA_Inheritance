@@ -47,10 +47,13 @@ const App = () => {
         {/* THE GLOBE GIF */}
         <div className="relative w-72 h-72 md:w-[500px] md:h-[500px] flex items-center justify-center">
           <img 
-            src="/globe.gif" 
-            alt="Loading..." 
-            className="w-full h-full object-contain mix-blend-screen"
-          />
+  src="/globe.gif"
+  className="w-full h-full object-contain"
+  style={{
+    maskImage: "radial-gradient(circle, black 60%, transparent 75%)",
+    WebkitMaskImage: "radial-gradient(circle, black 60%, transparent 75%)"
+  }}
+/>
           
           {/* OPTIONAL: A soft purple radial glow behind the globe to give it depth */}
           <div className="absolute inset-0 bg-purple-600/10 blur-[120px] rounded-full z-[-1]" />
@@ -95,7 +98,7 @@ const App = () => {
         <Route path="" element={isAuthed ? <Home /> : <Navigate to="/join" />} />
         <Route path="join" element={!isAuthed ? <Landing /> : <Navigate to="/" />} />
         <Route path="explore" element={isAuthed ? <Explore /> : <Navigate to="/join" />}/>
-        <Route path="testing" element={isAuthed ? <Testing /> : <Navigate to="/join" />}/>
+        <Route path="testing" element={<Testing />}/>
 
 
         <Route path="studio" element={isAuthed ? <Studio /> : <Navigate to="/join" />}/>
