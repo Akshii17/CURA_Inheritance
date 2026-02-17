@@ -24,9 +24,8 @@ const earningsData = [
 ];
 
 const saleTypeData = [
-  { name: 'Direct Sale', value: 45 },
-  { name: 'Auction', value: 30 },
-  { name: 'Fractional', value: 25 },
+  { name: 'Direct Sale', value: 55 },
+  { name: 'Auction', value: 45 },,
 ];
 
 const recentSales = [
@@ -35,7 +34,7 @@ const recentSales = [
   { id: 3, item: "Neon Dreams", price: "1.45 ETH", user: "@sarah_art", time: "1d ago", img: "https://images.unsplash.com/photo-1618172193763-c511deb635ca?w=100&q=80" },
 ];
 
-const COLORS = ['#ffffff', '#a3a3a3', '#525252'];
+const COLORS = ['#7C3AED', '#F3E5AB', '#ffffff'];
 
 //helper1: anim num(for text)
 const AnimatedNumber = ({ value }) => {
@@ -142,7 +141,7 @@ export default function AnalyticsPage() {
         <div className="mx-auto max-w-[1400px]">
           
           <div className="mb-10">
-            <h1 className="mb-2 font-serif text-4xl font-normal">Artist Dashboard</h1>
+         <h1 className="mb-2 font-serif text-5xl font-normal text-[#F3E5AB]">Artist Dashboard</h1>
             <p className="text-gray-400">Welcome back. Here is your artwork sales performance.</p>
           </div>
 
@@ -162,8 +161,8 @@ export default function AnalyticsPage() {
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorEth" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#fff" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#fff" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="##7C3AED" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#7C3AED" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
@@ -192,9 +191,9 @@ export default function AnalyticsPage() {
                   <BarChart data={chartData} onMouseLeave={handleBarLeave}>
                     <defs>
                       <linearGradient id="shinyGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#ffffff" stopOpacity={1}/>
+                        <stop offset="0%" stopColor="#F3E5AB" stopOpacity={1}/>
                         <stop offset="40%" stopColor="#d4d4d4" stopOpacity={1}/>
-                        <stop offset="100%" stopColor="#737373" stopOpacity={1}/>
+                        <stop offset="100%" stopColor="#7C3AED" stopOpacity={0.5}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
@@ -238,7 +237,7 @@ export default function AnalyticsPage() {
                       <Tooltip contentStyle={{ backgroundColor: '#000', border: '1px solid #333', borderRadius: '8px' }} itemStyle={{ color: '#fff' }} />
                       <Legend verticalAlign="top" height={36} iconType="circle" formatter={(value) => <span className="text-gray-400">{value}</span>}/>
                       <Bar dataKey="primary" stackId="a" name="Primary Sales" fill="#ffffff" radius={[0, 4, 4, 0]} animationDuration={1500} />
-                      <Bar dataKey="secondary" stackId="a" name="Royalties" fill="#525252" radius={[0, 4, 4, 0]} animationDuration={1500} />
+                      <Bar dataKey="secondary" stackId="a" name="Royalties" fill="#7C3AED" stopOpacity={0.5} radius={[0, 4, 4, 0]} animationDuration={1500} />
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartOnScroll>
@@ -247,7 +246,7 @@ export default function AnalyticsPage() {
           </div>
 
           {/* stats*/}
-          <div className="mb-10 grid grid-cols-3 gap-6">
+          <div className="mb-10 grid grid-cols-3 gap-6 text-[#F3E5AB]">
             <StatCard title="Total Earnings" value="14.2 ETH" icon={<Wallet size={20} />} animated={true} />
             <StatCard title="Purchases" value="24" icon={<ShoppingBag size={20} />} animated={true} />
             <StatCard title="Total Sales" value="185" icon={<Activity size={20} />} animated={true} />

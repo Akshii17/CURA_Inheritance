@@ -1,22 +1,65 @@
+
 import { ClockFading } from "lucide-react";
 import { Heart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { ethers } from "ethers";
+import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
+import { fetchEthPriceINR } from "../context/ethToRupee";
+
+
 
 const ArtCard = ({ art, page }) => {
 
-  const navigate = useNavigate();
 
-  const mockAuthUser = {
-    userId: 2,
-    username: "N. Verma",
-  };
 
-  const loggedInUser = mockAuthUser;
+  const { contract, address, isConnected, artist } = useArtistContext();
+  const { DS, auction, artists, fetchArtworks, fetchLikedArtworks, likedArtworks } = useQueryContext();
 
-  const [isFavorite, setIsFavorite] = useState(false);
+  const artistObject = artists?.find(
+    (item) =>
+      item?.artistAddress?.toLowerCase() === art?.originalArtist?.toLowerCase()
+  );
+
+
+
+
+  const dsObject = DS?.find(
+    (item) => item.artworkID === art.artworkID
+  );
+
+  let DSpriceWei = dsObject?.price;
+  const priceInEth = DSpriceWei
+    ? ethers.formatEther(DSpriceWei)
+    : "0";
+
+  const auctionObject = auction?.find(
+    (item) => item.artID === art.artworkID
+  );
+
+  let aucBasePriceWei = auctionObject?.basePrice;
+  const priceInEthAuc = aucBasePriceWei
+    ? ethers.formatEther(aucBasePriceWei)
+    : "0";
+
+  let aucWinningPriceWei = auctionObject?.winningBid;
+  const priceInEthWin = aucWinningPriceWei
+    ? ethers.formatEther(aucWinningPriceWei)
+    : "0";
+
+  //console.log(likedArtworks);
+
+  let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
+
+
+
+
+
   const [tick, setTick] = useState(0);
+
 
   useEffect(() => {
     if (art.saleType !== "auction") return;
@@ -29,14 +72,17 @@ const ArtCard = ({ art, page }) => {
   }, [art.saleType]);
 
 
-  const getTimeRemaining = (endDate) => {
-    const now = new Date();
-    const end = new Date(endDate);
+  const getTimeRemaining = () => {
+    if (!auctionObject?.endTime) return undefined;
+
+    const now = Date.now();
+
+    // convert seconds → milliseconds
+    const end = Number(auctionObject.endTime) * 1000;
+
     const diff = end - now;
 
-    if (diff <= 0) {
-      return null; // auction ended
-    }
+    if (diff <= 0) return null;
 
     const totalSeconds = Math.floor(diff / 1000);
 
@@ -48,106 +94,74 @@ const ArtCard = ({ art, page }) => {
     return { days, hours, minutes, seconds };
   };
 
-  const timeRemaining = art.saleType === "auction" ? getTimeRemaining(art.endDate) : null;
 
-  const auctionEnded = art.saleType === "auction" && timeRemaining === null;
+
+  const timeRemaining = art.saleType === "auction" ? getTimeRemaining() : null;
+
+  const auctionEnded =
+    art.saleType === "auction" &&
+    auctionObject &&
+    timeRemaining === null;
+
   if (auctionEnded && page === "explore") {
     return null;
   }
 
-  const handleFavoriteClick = (e) => {
-    e.preventDefault();    // stops <Link>
-    e.stopPropagation();  // stops bubbling
+  const [ethToInr, setEthToInr] = useState(null);
 
-    setIsFavorite((prev) => !prev);
-  };
-
-  const handleBuy = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(`/directcheckout/${art.id}`);
-  };
-
-  const handleSell = (e) => {
-    //open modal to sell
-  };
-
-  const handleRemove = (e) => {
-    //open modal to remove
-  };
-
-  const handleEndAuction = (e) => {
-    //open modal to end auc
-  };
-
-  const handlePlaceBid = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigate(`/auctioncheckout/${art.id}`);
-  };
-
-  const getButtonConfig = ({ saleType, status, artistId, userId }) => {
-    // UNSOLD → Sell
-    if (status === "Unsold") {
-      return { label: "Sell", action: handleSell };
-    }
-
-    // DIRECT SALE
-    if (saleType === "direct") {
-      if (artistId === userId) {
-        return { label: "End Sale", action: handleRemove };
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const price = await fetchEthPriceINR();
+        setEthToInr(price);
+      } catch (err) {
+        console.log("Failed to fetch ETH price", err);
       }
-      return { label: "Buy Now", action: handleBuy };
-    }
+    };
 
-    // AUCTION
-    if (saleType === "auction") {
-      if (artistId === userId) {
-        return { label: "End Auction", action: handleEndAuction };
-      }
-      return { label: "Place Bid", action: handlePlaceBid };
-    }
+    load();
+  }, []);
 
-    return null;
-  };
 
-  const buttonConfig = getButtonConfig({
-    saleType: art.saleType,
-    status: art.status,
-    artistId: art.artistId,
-    userId: loggedInUser.userId,
-  });
+  const priceInInr = ethToInr ? Number(priceInEth) * ethToInr : null;
+  const priceInInrAuc = ethToInr
+    ? Number(priceInEthAuc) * ethToInr
+    : null;
+  const priceInInrWin = ethToInr
+    ? Number(priceInEthWin) * ethToInr
+    : null;
 
-  if (!buttonConfig) return null;
+
+
+
 
   return (
     <div className="block group">
+
       {/* Image */}
-      <Link to={`/art/${art.id}`}>
+      <Link to={`/art/${art.artworkID}`}>
         <div className="relative overflow-hidden rounded-lg bg-neutral-900 cursor-pointer">
           {/*Likes*/}
-          <button
-            onClick={handleFavoriteClick}
-            className="
-            absolute bottom-3 right-3 z-10
-            p-2 rounded-full
-            bg-black/70 backdrop-blur
-            transition-transform
-            hover:scale-110
-          "
-          >
-            <Heart
-              size={18}
-              className={`
-              transition-colors
-              ${isFavorite
-                  ? "text-red-500 fill-red-500"
-                  : "text-white"}
-            `}
-            />
-          </button>
 
-          <img src={art.image} alt={art.title} className=" w-full h-72 object-cover transition-transform duration-300 hover:scale-105 " />
+
+          <div className="relative inline-block w-full h-72 overflow-hidden rounded-lg shadow-2xl">
+            <>
+              <img
+                key={art.id}
+                src={`https://gateway.pinata.cloud/ipfs/${art.ipfsHash}`}
+                alt={art.artworkTitle}
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105 pointer-events-none"
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              />
+
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="transform -rotate-45 text-white/80 font-black text-2xl tracking-[0.3em] whitespace-nowrap mix-blend-overlay drop-shadow-md">
+                  CURA © PROTECTED
+                </div>
+              </div>
+            </>
+          </div>
 
           {/* Sale Type Badge */}
           <span
@@ -205,28 +219,55 @@ const ArtCard = ({ art, page }) => {
       {/* Info */}
       <div>
         <h3 className=" mt-2 font-serif text-lg text-white">
-          {art.title}
+          {art.artworkTitle}
         </h3>
         <div className="flex justify-between" >
           <div className=" space-y-1">
 
-            <p className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
+            <Link to={`/artist/${artistObject?.artistAddress}`} className="text-sm text-gray-400 cursor-pointer hover:underline underline-offset-3 decoration-transparent
   transition-all duration-300
   hover:decoration-gray-300 hover:text-gray-300">
-              {art.artist}
-            </p>
+              By {artistObject.name}
+            </Link>
 
+            {/* ⭐ PRICE DISPLAY */}
             <p className="text-sm text-gray-300">
-              {art.saleType === "auction" && <span className="text-gray-500">Current Bid: </span>}
-              {art.price} {art.currency}
+              {art.saleType === "auction" && (
+                <span className="text-gray-500">
+                  Current Bid:{" "}
+                  {auctionObject?.winningBid
+                    ? priceInEthWin
+                    : priceInEthAuc}{" "}
+                  ETH
+                  {ethToInr && (
+                    <>
+                      {" "}
+                      (₹{" "}
+                      {(
+                        auctionObject?.winningBid
+                          ? priceInInrWin
+                          : priceInInrAuc
+                      )?.toLocaleString()}
+                      )
+                    </>
+                  )}
+                </span>
+              )}
+
+              {art.saleType === "direct" && (
+                <span className="text-gray-500">
+                  Price: {priceInEth} ETH
+                  {ethToInr && (
+                    <> (₹ {priceInInr?.toLocaleString()})</>
+                  )}
+                </span>
+              )}
             </p>
           </div>
-          {page !== "explore" && <button onClick={buttonConfig.action} className="bg-neutral-700 h-8 w-20 mt-3 text-sm rounded-md cursor-pointer hover:bg-red-600 transition duration-300">
-            {buttonConfig.label}
-          </button>}
         </div>
       </div>
     </div>
+
   );
 };
 

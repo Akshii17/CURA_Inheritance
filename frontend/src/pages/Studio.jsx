@@ -1,20 +1,20 @@
 import React from 'react'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRef } from "react";
 import { X } from "lucide-react"
 import ArtGrid from "../components/ArtGrid";
-import SampleArtData from "../constants/SampleArtData";
+import { useQueryContext } from '../context/QueryContext';
+import { useArtistContext } from '../context/ArtistContext';
 
 
 
 const Studio = () => {
 
-  const mockAuthUser = {
-    userId: 2,
-    username: "N. Verma",
-  };
 
-  const loggedInUser = mockAuthUser;
+  const { artist, contract } = useArtistContext();
+  const { artworks, likedArtworks } = useQueryContext();
+
+  const loggedArtistAddress = artist?.artistAddress.toLowerCase();
 
   const [activeTab, setActiveTab] = useState(0);
   const prevTab = useRef(activeTab);
@@ -22,31 +22,75 @@ const Studio = () => {
   const STATUS_FILTERS = ["Live", "Up for Sale", "Sold", "Unsold"];
   const [status, setStatus] = useState(null);
 
+  const [owners, setOwners] = useState({});
+
+  useEffect(() => {
+    const fetchOwners = async () => {
+      if (!contract || artworks.length === 0) return;
+
+      const ownershipMap = {};
+
+      for (const art of artworks) {
+        try {
+          const owner = await contract.checkOwnership(art.artworkID);
+          ownershipMap[art.artworkID] = owner.toLowerCase();
+        } catch (err) {
+          console.error("Error fetching owner:", err);
+        }
+      }
+
+      setOwners(ownershipMap);
+    };
+
+    fetchOwners();
+  }, [contract, artworks]);
+
   //Art in Your Art
-  const myArt = SampleArtData.filter(
-    (art) => art.artistId === loggedInUser.userId
+  const myArt = artworks.filter(
+    (art) => art?.originalArtist.toLowerCase() === loggedArtistAddress
   );
 
   //filters in Your Art
   const filteredArt = myArt.filter((art) => {
-    if (!status) return true;     
-    return art.status === status;
+    let art_status = "";
+    const owner = owners[art.artworkID]
+
+    if (owner !== art.originalArtist) {
+      art_status = "Sold";
+    }
+    else if (owner === art.originalArtist && art.saleType === "auction") {
+      art_status = "Live";
+    }
+    else if (owner === art.originalArtist && art.saleType === "direct") {
+      art_status = "Up for Sale";
+    }
+    else if (owner === art.originalArtist && art.available === true) {
+      art_status = "Unsold";
+    }
+
+    if (!status) return true;
+    return art_status === status;
   });
 
+
   //Art in Purchased
-  const purchasedArt = SampleArtData.filter(
-    art => art.purchasedBy?.includes(loggedInUser.userId)
-  );
+  const purchasedArt = artworks.filter((art) => {
+    const owner = owners[art.artworkID];
+    return (
+      owner === loggedArtistAddress &&
+      art.originalArtist?.toLowerCase() !== loggedArtistAddress)
+  });
 
   //Art in Favorites
-  const likedArt = SampleArtData.filter(
-    art => art.likedBy?.includes(loggedInUser.userId)
+  const likedArt = artworks.filter(art =>
+    likedArtworks.some(liked => liked.artWorkID === art.artworkID)
   );
+
 
   //filters in Favorites
   const filteredLikedArt = likedArt.filter((art) => {
-    if (!status) return true;     
-    return art.status === "Up for Sale" || art.status === "Live";
+    if (!status) return true;
+    return art.saleType === "direct" || art.saleType === "auction";
   });
 
   const isForSaleActive = status === "Up for Sale";
@@ -54,7 +98,7 @@ const Studio = () => {
   return (
 
     <div className="min-h-screen px-10 py-6 text-white">
-      <h1 className="text-3xl text-neutral-300 mt-1 mb-4 font-serif">
+      <h1 className="text-[#F3E5AB] text-5xl mt-1 mb-4 font-serif">
         Manage your Creations & Collections
       </h1>
 
@@ -77,11 +121,10 @@ const Studio = () => {
                 className="relative flex justify-center pb-4 text-sm tracking-wide"
               >
                 <span
-                  className={`transition-colors ${
-                    isActive
+                  className={`transition-colors ${isActive
                       ? "text-white"
                       : "text-white/50 hover:text-white"
-                  }`}
+                    }`}
                 >
                   {label}
                 </span>
@@ -118,7 +161,7 @@ const Studio = () => {
                   key={item}
                   onClick={() => setStatus(isActive ? null : item)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
-                    ${ isActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600" }`}
+                    ${isActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600"}`}
                 >
                   {item}
 
@@ -135,7 +178,7 @@ const Studio = () => {
 
           {/* ART RESULTS / EMPTY STATE */}
           <div className="mt-6">
-            {filteredArt.length === 0 ? (
+            {filteredArt.length === 10 ? (
               <p className="text-gray-500 text-lg text-center mt-10">
                 No artworks yet
               </p>
@@ -145,7 +188,7 @@ const Studio = () => {
           </div>
         </div>
       )}
-      
+
       {activeTab === 1 && (
         purchasedArt.length === 0 ? (
           <p className="text-gray-500 text-lg text-center mt-10">
@@ -163,26 +206,27 @@ const Studio = () => {
           </p>
         ) : (
           <>
-          <button
-            onClick={() => setStatus(isForSaleActive ? null : "Up for Sale")}
-                  className={`flex mt-6 items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
-                    ${ isForSaleActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600" }`}
-                >
-                  For Sale
+            <button
+              onClick={() => setStatus(isForSaleActive ? null : "Up for Sale")}
+              className={`flex mt-6 items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
+                    ${isForSaleActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600"}`}
+            >
+              For Sale
 
-                  {isForSaleActive && (
-                    <X
-                      size={14}
-                      className="opacity-70 hover:opacity-100"
-                    />
-                  )}
-          </button>
-          <ArtGrid artworks={filteredLikedArt} />
+              {isForSaleActive && (
+                <X
+                  size={14}
+                  className="opacity-70 hover:opacity-100"
+                />
+              )}
+            </button>
+            
+            <ArtGrid artworks={filteredLikedArt} />
           </>
         )
       )}
 
-      
+
     </div>
   )
 }

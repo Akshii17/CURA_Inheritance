@@ -1,158 +1,230 @@
-import { useParams } from "react-router-dom";
-import { useState } from "react";
-import { Lock } from "lucide-react";
-import SampleArtData from "../constants/SampleArtData";
+import { useParams, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
+import { Lock, LoaderCircle } from "lucide-react";
+import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
+import { ethers } from "ethers";
+import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const DirectSaleCheckout = () => {
+
+  const navigate = useNavigate();
+
+  const { contract, address, isConnected } = useArtistContext();
+  const { artworks, fetchArtworks, DS, artists, fetchDS } = useQueryContext();
+
   const { id } = useParams();
 
-  const art = SampleArtData.find(
-    (a) => a.id === Number(id)
+  const artwork = useMemo(() => {
+    if (!artworks || !id) return null;
+
+    return artworks.find(
+      (a) => String(a.artworkID) === String(id)
+    );
+  }, [artworks, id]);
+
+  const artistObject = artists?.find(
+    (item) => item?.artistAddress?.toLowerCase() === artwork?.originalArtist?.toLowerCase()
   );
 
-  if (!art) {
+
+  const [ethToInr, setEthToInr] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const price = await fetchEthPriceINR();
+        setEthToInr(price);
+      } catch (err) {
+        console.log("Failed to fetch ETH price", err);
+      }
+    };
+
+    load();
+  }, []);
+
+  const dsObject = DS.find(
+    (item) => item.artworkID === artwork.artworkID
+  );
+
+  const DSid = dsObject?.directSaleID;
+  if (!artwork) {
     return <div className="text-white p-10">Artwork not found</div>;
   }
 
-  const artwork = {
-    image: art.image,
-    title: art.title,
-    artist: art.artist,
-    tags: art.tags,
-    priceINR: 1000,
-    gasFeeINR: 120,
-    priceETH: 1.1,
-    walletAddress: "1gD67....4"
-  };
+  let DSpriceWei = dsObject?.price;
+  const priceInEth = ethers.formatEther(DSpriceWei);
 
-  const handlePay = (artwork) => {
-    console.log("Paying for:", artwork);
-    // wagmi writeContract / backend call here
-  };
+  const priceInInr = ethToInr ? Number(priceInEth) * ethToInr : null;
+
 
   const [finalSaleChecked, setFinalSaleChecked] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const totalINR = artwork.priceINR + artwork.gasFeeINR;
 
   const canPay = finalSaleChecked && ownershipChecked;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0f0f14] to-[#14141c] text-white px-4 py-10">
-      <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-10">
+  const handlePay = async () => {
+    try {
+      setIsLoading(true);
 
-        {/* LEFT – ARTWORK */}
-        <div className="space-y-6">
-          <div className="relative">
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+      console.log(DSid);
+
+      const tx = await contract.buyDSArtwork(DSid, { value: DSpriceWei });
+
+      await tx.wait();
+      toast.success("Artwork purchased");
+      navigate(`/success/${artwork.artworkID}`);
+
+      fetchDS();
+      fetchArtworks();
+
+      // Reset state
+      //show
+      setIsLoading(false);
+    } catch (error) {
+      console.log("error in createArtwork", error);
+      toast.error("Something went wrong, Please try again later");
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className=" w-full text-white flex items-center justify-center px-6 py-5">
+      <div className="max-w-6xl w-full grid md:grid-cols-2 gap-12 items-stretch">
+
+        {/* LEFT — ARTWORK (MATCHES AUCTION) */}
+        <div className="space-y-6 flex flex-col items-center h-full justify-center">
+          <div className="relative w-full max-w-md aspect-square">
+
             <img
-              src={artwork.image}
-              alt={artwork.title}
-              className="rounded-2xl shadow-xl w-full max-w-md mx-auto"
+              src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
+              alt={artwork.artworkTitle}
+              className="rounded-xl shadow-lg w-full h-full object-cover pointer-events-none"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
             />
-            <span className="absolute top-4 left-4 bg-emerald-500 text-black text-xs font-semibold px-3 py-1 rounded-full">
-              Direct Sale
-            </span>
+
+            {/* Watermark Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="transform -rotate-45 text-white/20 font-black text-2xl tracking-[0.3em] whitespace-nowrap mix-blend-overlay drop-shadow-md">
+                CURA © PROTECTED
+              </div>
+            </div>
+
           </div>
 
-          <div className="text-center md:text-left">
-            <h1 className="text-2xl font-bold">{artwork.title}</h1>
-            <p className="text-gray-400">by {artwork.artist}</p>
-
-            <div className="flex flex-wrap gap-2 mt-3 justify-center md:justify-start">
-              {artwork.tags.map(tag => (
-                <span
-                  key={tag}
-                  className="text-xs px-3 py-1 rounded-full bg-white/10"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-[#F3E5AB]">
+              {artwork.artworkTitle}
+            </h1>
+            <p className="text-gray-400">by {artistObject.name}</p>
+            {/* <p className="text-gray-400">Sold by: {artwork.currentOwner}</p> */}
           </div>
         </div>
 
-        {/* RIGHT – CHECKOUT */}
-        <div className="bg-white/5 rounded-2xl p-6 space-y-6 backdrop-blur">
-          <h2 className="text-xl font-semibold">Purchase Details</h2>
 
-          {/* PRICE BREAKDOWN */}
+        {/* RIGHT — CHECKOUT (MATCHES AUCTION HEIGHT) */}
+        <div className="bg-white/5 rounded-2xl p-8 space-y-6 backdrop-blur h-full flex flex-col">
+          <h2 className="text-2xl font-semibold text-[#F3E5AB]">
+            Purchase Details
+          </h2>
+
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Artwork Price</span>
-              <span>₹{artwork.priceINR.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-gray-400">
-              <span>Gas / Transaction</span>
-              <span>₹{artwork.gasFeeINR.toLocaleString()}</span>
-            </div>
-            <hr className="border-white/10" />
-            <div className="flex justify-between text-lg font-semibold">
-              <span>Total</span>
-              <span>
-                ₹{totalINR.toLocaleString()} 
-                <span className="text-sm text-gray-400">({artwork.priceETH} ETH)</span>
-              </span>
+              <p className="text-2xl font-bold text-[#7C3AED]">
+                {priceInEth} ETH{" "}
+                {priceInInr && (
+                  <span className="text-lg text-neutral-400 font-normal">
+                    (₹ {priceInInr.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                  </span>
+                )}
+              </p>
+
             </div>
           </div>
 
-          {/* WALLET */}
           <div className="space-y-1">
-            <label className="text-sm text-gray-400">Wallet Address</label>
-            <div className="bg-black/40 px-4 py-3 rounded-xl text-sm truncate">
-              {artwork.walletAddress}
+            <div className="bg-black/40 px-4 py-3 rounded-xl text-sm truncate border border-white/5">
+              <p className="text-bold text-[#F3E5AB]">Notice</p>
+              <p>Once confirmed, purchases cannot be canceled, reversed, or refunded.</p>
+              <p> Upon successful payment, the digital asset is immediately transferred to <br /> your connected wallet.</p>
             </div>
           </div>
 
-          {/* CONFIRMATIONS */}
           <div className="space-y-3 text-sm">
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={finalSaleChecked}
-                onChange={e => setFinalSaleChecked(e.target.checked)}
-                className="mt-1"
+                onChange={(e) => setFinalSaleChecked(e.target.checked)}
+                className="mt-1 accent-[#7C3AED]"
               />
-              <span>I understand this is a <b>final sale</b></span>
+              <span>
+                I understand this is a <b>final sale</b>
+              </span>
             </label>
+
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 checked={ownershipChecked}
-                onChange={e => setOwnershipChecked(e.target.checked)}
-                className="mt-1"
+                onChange={(e) => setOwnershipChecked(e.target.checked)}
+                className="mt-1 accent-[#7C3AED]"
               />
               <span>Ownership transfer occurs after payment</span>
             </label>
           </div>
 
-          {/* FINAL CONFIRMATION */}
           <div className="bg-black/40 rounded-xl p-4 text-sm space-y-2">
             <div className="flex items-center gap-2 text-amber-400">
               <Lock size={16} />
-              <span>Final Confirmation</span>
+              <span className="font-semibold">Final Confirmation</span>
             </div>
-            <p>
-              You are about to purchase <b>“{artwork.title}”</b> by <b>{artwork.artist}</b>
-              for <b>₹{totalINR.toLocaleString()}</b>.
-            </p>
-            <p className="text-red-400">This transaction is non-refundable.</p>
-          </div>
-        </div>
-      </div>
 
-      {/* STICKY PAY BUTTON */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur border-t border-white/10 p-4 md:static md:bg-transparent md:border-none md:mt-10">
-        <button
-          disabled={!canPay}
-          onClick={() => handlePay(artwork)}
-          className={`w-full max-w-5xl mx-auto block text-lg font-semibold py-4 rounded-2xl shadow-lg transition 
-            ${canPay ? "bg-red-500 hover:bg-red-600 cursor-pointer" : "bg-gray-600 cursor-not-allowed"}`}
-        >
-          Confirm & Pay ₹{totalINR.toLocaleString()}
-        </button>
+            <p>
+              You are about to purchase <b>“{artwork.artworkTitle}”</b> by{" "}
+              <b>{artistObject.name}</b> for{" "}
+              <b>{priceInEth} ETH</b>.
+            </p>
+
+            <p className="text-red-400/80 italic text-xs">
+              This transaction is non-refundable.
+            </p>
+          </div>
+
+          <button
+            disabled={!canPay}
+            onClick={handlePay}
+            className={`mt-auto w-full bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
+    ${canPay
+                ? "hover:opacity-90 cursor-pointer"
+                : "opacity-30 cursor-not-allowed"
+              }`}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+                Confirming Payment...
+              </span>
+            ) : (
+              `Confirm & Pay ${priceInEth} ETH`
+            )}
+          </button>
+
+
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default DirectSaleCheckout;
