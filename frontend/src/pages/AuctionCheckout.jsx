@@ -1,17 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { Clock, Gavel } from "lucide-react";
+import { Clock, Gavel, LoaderCircle } from "lucide-react";
 import { ethers } from "ethers";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import toast from "react-hot-toast";
+import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const AuctionCheckout = () => {
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const { contract, address, isConnected } = useArtistContext();
-  const { artworks, fetchArtworks, auction } = useQueryContext();
+  const { artworks, fetchArtworks, auction, artists, fetchAuction } = useQueryContext();
 
   const { id } = useParams();
 
@@ -27,6 +28,24 @@ const AuctionCheckout = () => {
     return <div className="text-white p-10">Artwork not found</div>;
   }
 
+  const artistObject = artists?.find(
+    (item) => item?.artistAddress?.toLowerCase() === artwork?.originalArtist?.toLowerCase()
+  );
+
+  const [ethToInr, setEthToInr] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const price = await fetchEthPriceINR();
+        setEthToInr(price);
+      } catch (err) {
+        console.log("Failed to fetch ETH price", err);
+      }
+    };
+
+    load();
+  }, []);
 
   //console.log(auction);
   const auctionObject = auction?.find(
@@ -44,6 +63,14 @@ const AuctionCheckout = () => {
   const priceInEthWin = aucWinningPriceWei
     ? ethers.formatEther(aucWinningPriceWei)
     : "0";
+
+
+  const priceInInrAuc = ethToInr
+    ? Number(priceInEthAuc) * ethToInr
+    : null;
+  const priceInInrWin = ethToInr
+    ? Number(priceInEthWin) * ethToInr
+    : null;
 
   const [tick, setTick] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
@@ -85,30 +112,34 @@ const AuctionCheckout = () => {
   const handlePlaceBid = async () => {
     try {
       setIsLoading(true);
-      
+
 
       let stringBid = bidAmount.toString();
       let bidInWei = ethers.parseEther(stringBid);
 
       if (!isConnected || !address || !contract) {
+        setIsLoading(false);
         return;
       }
 
       console.log(AuctionID);
-
       const tx = await contract.placeBid(AuctionID, { value: bidInWei });
 
       await tx.wait();
-      toast.success("Bid Placed");
+      
+
+      await fetchArtworks();
       await fetchAuction();
-      navigate(`/art/${artwork.artworkID}`);
+      navigate(`/bidplaced/${artwork.artworkID}`);
+
+      toast.success("Bid Placed");
 
       // Reset state
       setBidAmount("");
       setIsLoading(false);
     } catch (error) {
       console.log("error in bidding", error);
-      //toast.error("Something went wrong, Please try again later");
+      toast.error("Something went wrong, Please try again later");
       setIsLoading(false);
     }
   };
@@ -120,16 +151,29 @@ const AuctionCheckout = () => {
 
         <div className="space-y-6 flex flex-col items-center h-full">
           <div className="relative w-full max-w-md aspect-square">
+
             <img
               src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
               alt={artwork.artworkTitle}
-              className="rounded-xl shadow-lg w-full h-full object-cover"
+              className="rounded-xl shadow-lg w-full h-full object-cover pointer-events-none"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
             />
+
+            {/* Watermark Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="transform -rotate-45 text-white/20 font-black text-2xl tracking-[0.3em] whitespace-nowrap mix-blend-overlay drop-shadow-md">
+                CURA © PROTECTED
+              </div>
+            </div>
+
           </div>
 
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-[#F3E5AB]">{artwork.artworkTitle}</h1>
-            <p className="text-gray-400">by {artwork.originalArtist}</p>
+            <h1 className="text-3xl font-bold text-[#F3E5AB]">
+              {artwork.artworkTitle}
+            </h1>
+            <p className="text-gray-400">by {artistObject?.name}</p>
           </div>
 
           <div className="flex justify-center gap-4">
@@ -140,7 +184,9 @@ const AuctionCheckout = () => {
                   className="bg-black/40 backdrop-blur rounded-xl w-16 h-20 flex flex-col items-center justify-center animate-slideUp"
                 >
                   <span className="text-xl font-bold">{value}</span>
-                  <span className="text-xs uppercase text-gray-400">{label}</span>
+                  <span className="text-xs uppercase text-gray-400">
+                    {label}
+                  </span>
                 </div>
               ))
             ) : (
@@ -149,6 +195,7 @@ const AuctionCheckout = () => {
           </div>
         </div>
 
+
         <div className="bg-white/5 rounded-2xl p-8 space-y-6 backdrop-blur flex flex-col h-full">
           <h2 className="text-2xl font-semibold text-[#F3E5AB]">
             Place Your Bid
@@ -156,17 +203,27 @@ const AuctionCheckout = () => {
 
           <div className="space-y-2 text-md">
             <div className="flex justify-between">
-              <span>Number of Bids</span>
-              <span>17 </span>
-              {/* ???????????????????????????????????????add from graph */}
-            </div>
-            <div className="flex justify-between">
               <span>Base Price</span>
-              <span>{priceInEthAuc} ETH</span>
+              <p className="text-sm text-neutral-400 font-light">
+                {priceInEthAuc} ETH{" "}
+                {priceInInrAuc && (
+                  <span className="text-neutral-500">
+                    (₹ {priceInInrAuc.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                  </span>
+                )}
+              </p>
             </div>
             <div className="flex justify-between">
               <span>Current Bid</span>
-              <span>{priceInEthWin} ETH</span>
+              <p className="text-3xl font-bold text-[#7C3AED]">
+                {priceInEthWin} ETH{" "}
+                {priceInInrWin !== null && (
+                  <span className="text-lg text-neutral-400 font-normal">
+                    (₹ {priceInInrWin.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                  </span>
+                )}
+              </p>
+
             </div>
           </div>
 
@@ -195,7 +252,7 @@ const AuctionCheckout = () => {
                 type="checkbox"
                 checked={finalSaleChecked}
                 onChange={(e) => setFinalSaleChecked(e.target.checked)}
-                className="mt-1 accent- bg-[#7C3AED]"
+                className="mt-1 accent-[#7C3AED]"
               />
               <span>
                 I understand that bids cannot be withdrawn until the auction ends
@@ -207,7 +264,7 @@ const AuctionCheckout = () => {
                 type="checkbox"
                 checked={ownershipChecked}
                 onChange={(e) => setOwnershipChecked(e.target.checked)}
-                className="mt-1 accent- bg-[#7C3AED]"
+                className="mt-1 accent-[#7C3AED]"
               />
               <span>Ownership is transferred to the winner</span>
             </label>
@@ -217,14 +274,23 @@ const AuctionCheckout = () => {
           <button
             disabled={!canPay}
             onClick={handlePlaceBid}
-            className={`mt-auto w-full  bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
-              ${canPay
+            className={`mt-auto w-full bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
+    ${canPay
                 ? "hover:opacity-90 cursor-pointer"
                 : "opacity-30 cursor-not-allowed"
               }`}
           >
-            Confirm & Bid {bidAmount} ETH
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+                Placing Bid...
+              </span>
+            ) : (
+              `Confirm & Bid ${bidAmount} ETH`
+            )}
           </button>
+
+
         </div>
       </div>
     </div>

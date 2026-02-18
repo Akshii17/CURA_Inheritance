@@ -1,252 +1,199 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { User, MapPin, Link as LinkIcon, Calendar,Check } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { User, MapPin, Link as LinkIcon, Calendar, Check, Share, Bell, Plus, Heart, Wallet, ArrowRight, X } from 'lucide-react';
 import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from '../context/QueryContext';
 import toast from 'react-hot-toast';
 import { ethers } from "ethers";
-import { useQueryContext } from '../context/QueryContext';
-
 
 const ArtistProfile = () => {
     const { contract, address, isConnected, artist } = useArtistContext();
-    const { artists, artworks,following } = useQueryContext();
+    const { artists, artworks, following, fetchArtists } = useQueryContext();
     const { id } = useParams();
 
-    let loggedArtistAddress = artist?.artistAddress?.toLowerCase();
+    // 1. Logic & Data Fetching
+    const artistData = useMemo(() => {
+        return artists.find(a => a?.artistAddress?.toLowerCase() === id.toLowerCase());
+    }, [artists, id]);
 
-    const [isFollowing, setIsFollowing] = useState(() => {
-        return following?.some(
-            (artist) => artist?.artist?.toLowerCase() === id.toLowerCase()
-        ) || false;
-    });
+    const [isFollowing, setIsFollowing] = useState(false);
 
-    
+    useEffect(() => {
+        if (following && id) {
+            setIsFollowing(following.some(f => f?.artist?.toLowerCase() === id.toLowerCase()));
+        }
+    }, [following, id]);
 
-    const artistData = artists.find(
-        (artist) => artist?.artistAddress?.toLowerCase() === id.toLowerCase()
-    );
-
+    const filteredArtworks = useMemo(() => {
+        return artworks.filter(art => art.originalArtist?.toLowerCase() === id.toLowerCase());
+    }, [artworks, id]);
 
     if (!artistData) {
         return (
-            <div className="min-h-screen flex items-center justify-center text-white">
+            <div className="min-h-screen flex items-center justify-center text-white bg-black">
                 Artist not found
             </div>
         );
     }
 
-
     const handleFollow = async () => {
-        let checksumAddress;
-
-        try {
-            checksumAddress = ethers.getAddress(artistData.artistAddress);
-            console.log(checksumAddress);
-        } catch (error) {
-            console.error("Invalid address");
-            toast.error("Something went wrong, Please try again later")
-        }
         try {
             if (!isConnected || !address || !contract) {
+                toast.error("Please connect your wallet");
                 return;
             }
-
-            console.log("following");
-            setIsFollowing((prev) => !prev);
-
-            const follow = await contract.FollowUnfollow(checksumAddress);
-
-            await follow.wait();
-            toast.success("Following!");
-
+            const checksumAddress = ethers.getAddress(artistData.artistAddress);
+            setIsFollowing(prev => !prev);
+            const tx = await contract.FollowUnfollow(checksumAddress);
+            await tx.wait();
+            toast.success(isFollowing ? "Unfollowed" : "Following!");
+            fetchArtists();
         } catch (error) {
-            setIsFollowing((prev) => !prev);
-            console.log("error in following", error);
-            toast.error("Something went wrong, Please try again later");
+            setIsFollowing(prev => !prev);
+            toast.error("Follow failed");
         }
     };
 
-    const INITIAL_USER = {
-        name: artistData.name,
-        username: artistData.username,
-        tagline: "Digital Artist & Curator", //
-        followers: artistData.followerCount,
-        about: artistData.bio,
-        location: "Mumbai, India", //
-        website: "cura.art/shreyy", //
-        joined: "Joined Jan 2026", //
-        profileImage: null,
-        coverImage:
-            "https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg", //
-    };
-
-    const filteredArtworks = artworks.filter((art) => {
-
-        return (
-            art.originalArtist?.toLowerCase() === artistData?.artistAddress?.toLowerCase()
-        );
-    });
-
-
     return (
-        <div className="min-h-screen bg-[#050505] text-white font-sans pb-24">
-            {/* Keeping font import only */}
-            <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap'); 
-        :root { --font-serif: 'Playfair Display', serif; --font-sans: 'Manrope', sans-serif; } 
-        body { font-family: var(--font-sans); }
-      `}</style>
-
-
-
-
-
-            {/*cover*/}
-            <div className="h-[180px] md:h-[280px] w-full relative overflow-hidden rounded-b-3xl -mb-[60px] md:-mb-[80px]">
-                <img src={INITIAL_USER.coverImage} alt="Cover" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] to-transparent" />
-
+        <div className="min-h-screen bg-black text-white pb-20">
+            {/* HERO BANNER - Styled like user profile [cite: 350] */}
+            <div 
+                className="relative h-80 bg-cover bg-center overflow-hidden"
+                style={{ backgroundImage: `url(https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg)` }}
+            >
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-10 left-10 w-72 h-72 bg-[#F3E5AB] rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#7C3AED] rounded-full blur-3xl"></div>
+                </div>
             </div>
 
-            <main className="max-w-[1000px] mx-auto px-5">
-                {/*prof card*/}
-                <div className="px-5 relative">
-
-                    {/* avatar and action rows*/}
-                    <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-6 gap-5 md:gap-0">
-                        <div className="relative">
-                            <div className="w-[120px] h-[120px] md:w-[160px] md:h-[160px] rounded-full border-4 md:border-6 border-[#050505] overflow-hidden bg-[#1a1a1a] relative">
-                                {INITIAL_USER.profileImage ? (
-                                    <img src={INITIAL_USER.profileImage} alt="Profile" className="w-full h-full rounded-full object-cover" />
+            <main className="max-w-7xl mx-auto px-6 -mt-32 relative z-10">
+                
+                {/* PROFILE CARD - Applying User Profile Layout [cite: 351, 352] */}
+                <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-white/10 rounded-3xl p-8 mb-8 shadow-2xl">
+                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                        
+                        {/* Avatar [cite: 352] */}
+                        <div className="relative group">
+                            <div className="w-40 h-40 rounded-3xl border-4 border-[#7C3AED] overflow-hidden bg-gradient-to-br from-[#7C3AED]/20 to-transparent shadow-2xl">
+                                {artistData.pfpHash ? (
+                                    <img 
+                                        src={`https://gateway.pinata.cloud/ipfs/${artistData.pfpHash}`} 
+                                        alt="Profile" 
+                                        className="w-full h-full object-cover" 
+                                    />
                                 ) : (
-                                    <div className="w-full h-full rounded-full bg-[#222] flex items-center justify-center">
-                                        <User size={60} color="#555" />
+                                    <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                                        <User size={60} className="text-neutral-600" />
                                     </div>
                                 )}
                             </div>
+                            <div className="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-[#1a1a1a]"></div>
                         </div>
 
-                        {/*action buttons*/}
-                        <div className="flex gap-3 pb-2.5 w-full md:w-auto justify-center flex-wrap">
+                        {/* Info Section [cite: 243] */}
+                        <div className="flex-1 text-center lg:text-left">
+                            <h1 className="text-[#F3E5AB] text-5xl mt-1 mb-2 font-serif">
+                                {artistData.name || "Unnamed Artist"}
+                            </h1>
+                            <p className="text-lg text-gray-400 mb-4">
+                                @{artistData.username || "username"} <span className="text-gray-600">•</span> Digital Artist & Curator
+                            </p>
+                            
+                            {/* Metadata Strip */}
+                            <div className="flex justify-center lg:justify-start gap-6 text-gray-500 text-sm mb-6">
+                                <div className="flex items-center gap-1.5"><MapPin size={16} /> Mumbai, India</div>
+                                <div className="flex items-center gap-1.5">
+                                    <LinkIcon size={16} /> 
+                                    <span className="hover:text-white cursor-pointer transition-colors">cura.art/{artistData.username}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5"><Calendar size={16} /> Joined Jan 2026</div>
+                            </div>
 
-                            {isFollowing ? (
-                                <button
-                                    className="text-white border border-white px-6 py-2.5 rounded-full font-bold text-sm cursor-pointer flex items-center gap-2"
+                            <p className="text-gray-300 leading-relaxed mb-6 max-w-2xl">
+                                {artistData.bio || "No bio available."}
+                            </p>
+
+                            {/* Stats Cards [cite: 243] */}
+                            <div className="flex flex-wrap gap-6 justify-center lg:justify-start">
+                                <div className="bg-white/5 border border-white/10 rounded-2xl px-8 py-4 backdrop-blur-sm">
+                                    <div className="text-3xl font-bold text-[#F3E5AB]">{artistData.followerCount || 0}</div>
+                                    <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mt-1">Followers</div>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-2xl px-8 py-4 backdrop-blur-sm">
+                                    <div className="text-3xl font-bold text-[#F3E5AB]">{filteredArtworks.length}</div>
+                                    <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mt-1">Creations</div>
+                                </div>
+                            </div>
+
+                            {/* Action Buttons [cite: 246] */}
+                            <div className="flex flex-wrap gap-3 mt-8 justify-center lg:justify-start">
+                                <button 
                                     onClick={handleFollow}
+                                    className={`px-8 py-3 rounded-xl font-bold transition-all hover:scale-105 flex items-center gap-2 ${
+                                        isFollowing 
+                                        ? "bg-white/5 border border-white/10 text-white" 
+                                        : "bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB]"
+                                    }`}
                                 >
-                                     Following <Check/>
+                                    {isFollowing ? <><Check size={18} /> Following</> : "Follow"}
                                 </button>
-                            ) : (
-                                <button
-                                    className="text-white border border-white px-6 py-2.5 rounded-full font-bold text-sm cursor-pointer flex items-center gap-2 hover:scale-105 transition-transform"
-                                    onClick={handleFollow}
-                                >
-                                    Follow
+                                <button className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all">
+                                    <Share size={20} />
                                 </button>
-                            )}
-
-
+                            </div>
                         </div>
-                    </div>
-
-                    {/*prof info*/}
-                    <div className="max-w-[600px] mt-2.5 text-center md:text-left w-full">
-                        {
-                            <>
-                                <h1 className="text-3xl font-bold font-serif m-0 mb-1 tracking-tight">{INITIAL_USER.name}</h1>
-                                <div className="text-base text-[#8a8a8a] mb-4 font-medium">{INITIAL_USER.username} • {INITIAL_USER.tagline}</div>
-
-                                <div className="flex justify-center md:justify-start gap-6 flex-wrap text-[#666] text-[13px] mb-6">
-                                    {INITIAL_USER.location && <div className="flex items-center gap-1.5"><MapPin size={14} /> {INITIAL_USER.location}</div>}
-                                    {INITIAL_USER.website && <div className="flex items-center gap-1.5"><LinkIcon size={14} /> <a href={`https://${INITIAL_USER.website}`} className="text-inherit no-underline hover:text-white">{INITIAL_USER.website}</a></div>}
-                                    <div className="flex items-center gap-1.5"><Calendar size={14} /> {INITIAL_USER.joined}</div>
-                                </div>
-
-                                <div className="text-[15px] leading-relaxed text-[#e0e0e0] mb-5">{INITIAL_USER.about}</div>
-
-                                {/*folower stats*/}
-                                <div className="inline-flex gap-6 bg-white/5 px-6 py-3 rounded-2xl border border-white/5 mt-5">
-                                    <div className="flex flex-col">
-                                        <span className="text-lg font-bold text-white">{INITIAL_USER.followers}</span>
-                                        <span className="text-[11px] text-[#888] uppercase tracking-wider mt-0.5">Followers</span>
-                                    </div>
-                                </div>
-                            </>
-                        }
                     </div>
                 </div>
 
-                {/* YOUR COLLECTION */}
+                {/* ARTIST'S CREATIONS GALLERY */}
                 <section className="mt-16">
-                    {/* header row */}
-                    <div className="flex items-center justify-between">
-                        <h2 className="text-2xl font-serif font-bold">{artistData.name}'s Creations</h2>
-                        <span className="text-sm text-gray-400">
-                            {filteredArtworks.length} {" "}
-                            {filteredArtworks.length === 1 ? "artwork" : "artworks"}
+                    <div className="flex items-center justify-between mb-8">
+                        <h2 className="text-3xl font-serif font-bold">
+                            {artistData.name}'s Creations
+                        </h2>
+                        <span className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-gray-400">
+                            {filteredArtworks.length} {filteredArtworks.length === 1 ? "Artwork" : "Artworks"}
                         </span>
                     </div>
 
-
-
-                    {/* grid */}
-                    <div className="mt-6 grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {/* Grid using updated styling */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                         {filteredArtworks.map((art) => (
-                            <Link to={`/art/${art.artworkID}`}
+                            <Link
+                                to={`/art/${art.artworkID}`}
                                 key={art.artworkID}
-                                className="
-          relative
-          aspect-square
-          overflow-hidden
-          rounded-md
-          bg-neutral-900
-          cursor-pointer
-          rounded-none
-          group
-        "
+                                className="relative aspect-square overflow-hidden rounded-2xl bg-neutral-900 group border border-white/5 hover:border-[#7C3AED]/50 transition-all shadow-lg"
                             >
                                 <img
                                     src={`https://gateway.pinata.cloud/ipfs/${art.ipfsHash}`}
                                     alt={art.artworkTitle}
-                                    className="
-                w-full h-full
-                object-cover
-                transition-transform duration-300
-                group-hover:scale-105
-                "
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                 />
 
-                                {/* hover overlay (optional but looks great) */}
-                                <div
-                                    className="
-            absolute inset-0
-            bg-black/40
-            opacity-0
-            group-hover:opacity-100
-            transition-opacity
-            flex items-center justify-center
-          "
-                                >
-                                    <span className="text-xs font-semibold text-white">View</span>
+                                {/* Watermark Overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-60 group-hover:opacity-50 transition-opacity">
+                                    <div className="transform -rotate-45 text-white font-bold text-md tracking-[0.3em] whitespace-nowrap mix-blend-overlay  px-2 py-1">
+                                        CURA © PROTECTED
+                                    </div>
+                                </div>
+
+                                {/* Hover Info [cite: 248] */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                                    <p className="text-sm font-bold text-[#F3E5AB] truncate">{art.artworkTitle}</p>
+                                    <p className="text-[10px] text-gray-400 uppercase tracking-widest mt-1">View Artwork</p>
                                 </div>
                             </Link>
                         ))}
                     </div>
 
-                    {/* empty state */}
                     {filteredArtworks.length === 0 && (
-                        <div className="text-gray-500 text-sm mt-10 text-center">
-                            Nothing here yet.
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-20 text-center">
+                            <p className="text-gray-500 italic">No creations found for this artist yet.</p>
                         </div>
                     )}
                 </section>
             </main>
-
-
-
-
-
         </div>
     );
 };

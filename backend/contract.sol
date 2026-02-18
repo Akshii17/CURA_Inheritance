@@ -390,7 +390,7 @@ contract artAuction is ERC721 {
         artwork.originalArtist,
         artwork.available);
     }
-    event withdraw(uint amount, address indexed receiver, uint auctionID);
+    event withdraw(uint amount, address indexed receiver, auctionID);
     function withdrawRefund(uint auctionID) public { //called by participants of auction who didnt win
         Auction storage auction = auctions[auctionID];
         require(auction.ended, "Auction hasn't ended yet");

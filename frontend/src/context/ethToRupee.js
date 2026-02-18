@@ -5,4 +5,4 @@ export const fetchEthPriceINR = async () => {
 
   const data = await res.json();
   return data.ethereum.inr;
-};
+};  

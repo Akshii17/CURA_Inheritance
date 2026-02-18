@@ -1,11 +1,14 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useArtistContext } from "../context/ArtistContext";
+import { useQueryContext } from "../context/QueryContext";
 import { ethers } from "ethers";
+import { LoaderCircle } from "lucide-react";
 
 
 const Modal = ({ isOpen, onClose, id }) => {
-    const { contract, address, isConnected } = useArtistContext();
+  const { contract, address, isConnected } = useArtistContext();
+  const { fetchArtworks, fetchDS, fetchAuction } = useQueryContext();
   const [saleType, setSaleType] = useState("");
   const [price, setPrice] = useState("");
   const [basePrice, setBasePrice] = useState("");
@@ -21,11 +24,11 @@ const Modal = ({ isOpen, onClose, id }) => {
     .toISOString()
     .split("T")[0];
 
-    const todaydate = new Date();
-    const end = new Date(endDate);
-    const duration = Math.floor((end - todaydate) / 1000) + 66600;
+  const todaydate = new Date();
+  const end = new Date(endDate);
+  const duration = Math.floor((end - todaydate) / 1000) + 66600;
 
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
     try {
 
       if (saleType === "auction" && (!basePrice || !endDate)) {
@@ -37,12 +40,12 @@ const Modal = ({ isOpen, onClose, id }) => {
         return;
       }
 
-      if(saleType === "auction"){
+      if (saleType === "auction") {
         createAuction(id, basePrice, duration)
       }
 
 
-      if(saleType === "direct"){
+      if (saleType === "direct") {
         createDS(price, id)
       }
 
@@ -71,6 +74,8 @@ const Modal = ({ isOpen, onClose, id }) => {
 
       await sellds.wait();
       toast.success("Direct Sale created successfully");
+      await fetchDS();
+      await fetchArtworks();
 
       // Reset state
       onClose();
@@ -103,6 +108,8 @@ const Modal = ({ isOpen, onClose, id }) => {
 
       await sellauc.wait();
       toast.success("Auction created successfully");
+      await fetchAuction();
+      await fetchArtworks();
 
       // Reset state
       onClose();
@@ -177,7 +184,7 @@ const Modal = ({ isOpen, onClose, id }) => {
           <div className="mt-3">
             <p className="mb-1">Price (in ETH)</p>
             <input
-              
+
               placeholder="Enter price"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
@@ -198,10 +205,18 @@ const Modal = ({ isOpen, onClose, id }) => {
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="rounded-lg bg-[#7c3aed] text-[#F3E5AB] px-4 py-2 hover:bg-[#5f2db7] disabled:opacity-50 cursor-pointer"
+            className="flex-1 px-6 py-3 rounded-xl bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
           >
-            {isLoading ? "Creating..." : "Create"}
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+                Creating...
+              </span>
+            ) : (
+              "Create"
+            )}
           </button>
+
         </div>
       </div>
     </div>

@@ -7,6 +7,7 @@ import {
   GET_ARTISTS,
   GET_LIKED_ARTWORKS,
   GET_FOLLOWING_LIST,
+  GET_FOLLOWERS_LIST,
   GET_WITHDRAWALS
 } from "../lib/GraphqlQueries";
 import { useArtistContext } from "./ArtistContext";
@@ -27,6 +28,8 @@ export const QueryContextProvider = ({ children }) => {
   const [likedArtworks, setLikedArtworks] = useState([]);
   const [owners, setOwners] = useState({});
   const [following, setFollowing] = useState([]);
+  const [followersList, setFollowersList] = useState([]);
+  const [withdrawals, setWithdrawals] = useState([]);
   const [error, setError] = useState(null);
 
   // 🔥 HELPERS
@@ -79,13 +82,17 @@ export const QueryContextProvider = ({ children }) => {
   };
 
   const fetchDS = async () => {
-    try {
-      const data = await request(GRAPHQL_ENDPOINT, GET_DS);
-      setDS(data.dsstates);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  try {
+    const data = await request(GRAPHQL_ENDPOINT, GET_DS);
+
+    const unique = dedupeByKey(data.dsstates, "artworkID");
+
+    setDS(unique);
+  } catch (err) {
+    setError(err.message);
+  }
+};
+
 
   const fetchLikedArtworks = async () => {
     try {
@@ -118,7 +125,21 @@ export const QueryContextProvider = ({ children }) => {
     }
   };
 
-  const fetchWithdrawals = async () => {
+
+  const fetchFollowersList = async () => {
+    try {
+        
+        const data = await request(GRAPHQL_ENDPOINT, GET_FOLLOWERS_LIST,
+            {
+            user: artist?.artistAddress?.toLowerCase()
+        });
+        setFollowersList(data.follows);
+    } catch (err) {
+        setError(err.message);
+    }
+ };
+
+ const fetchWithdrawals = async () => {
     console.log("hey");
 
     try {
@@ -126,7 +147,7 @@ export const QueryContextProvider = ({ children }) => {
         user: artist.artistAddress.toLowerCase()
       });
 
-      setFollowing(data.withdraws);
+      setWithdrawals(data.withdraws);
     } catch (err) {
       console.log(err);
 
@@ -181,6 +202,8 @@ export const QueryContextProvider = ({ children }) => {
 
       fetchLikedArtworks();
       fetchFollowingList();
+      fetchFollowersList();
+      fetchWithdrawals();
     }
 
   }, [artist]);
@@ -200,12 +223,17 @@ export const QueryContextProvider = ({ children }) => {
         owners,
         error,
         following,
+        followersList,
+        withdrawals,
 
         fetchArtworks,
         fetchArtists,
         fetchAuction,
         fetchDS,
         fetchLikedArtworks,
+        fetchFollowingList,
+        fetchFollowersList,
+        fetchWithdrawals
       }}
     >
       {children}

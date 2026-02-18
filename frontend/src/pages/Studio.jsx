@@ -98,7 +98,7 @@ const Studio = () => {
   return (
 
     <div className="min-h-screen px-10 py-6 text-white">
-      <h1 className="text-3xl text-neutral-300 mt-1 mb-4 font-serif">
+      <h1 className="text-[#F3E5AB] text-5xl mt-1 mb-4 font-serif">
         Manage your Creations & Collections
       </h1>
 

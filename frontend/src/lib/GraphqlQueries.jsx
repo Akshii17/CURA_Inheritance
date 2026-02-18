@@ -39,13 +39,16 @@ export const GET_ARTWORKS = gql`
       originalArtist
       royaltyP
       saleType
+      blockTimestamp 
     }
   }
 `;
 
 export const GET_DS = gql`
   query GetDS {
-    dsstates {
+    dsstates  (
+    orderBy: blockTimestamp
+    orderDirection: desc) {
       artworkID
       directSaleID
       price
@@ -128,6 +131,22 @@ export const GET_FOLLOWING_LIST = gql`
     orderDirection: desc
   ){
     artist
+    blockTimestamp
+  }
+  }
+`;
+
+export const GET_FOLLOWERS_LIST = gql`
+  query GetFollowing ($user: Bytes!){
+    follows (where : {
+    artist : $user 
+    isFollowing : true
+  } orderBy: blockTimestamp
+    orderDirection: desc
+  ){
+    artist
+    follower
+    isFollowing
     blockTimestamp
   }
   }

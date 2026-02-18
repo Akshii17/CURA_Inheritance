@@ -4,11 +4,10 @@ import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import { axiosInstance } from "../lib/axiosInstance";
 import { useState, useRef, useEffect } from "react";
-import coverImg from "../assets/coverImg.jpeg";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { request, gql } from "graphql-request";
 import { GET_WITHDRAWAL_INFO } from "../lib/GraphqlQueries";
-import { User, Share, X, Save, Camera, Heart, MessageCircle, Plus, Upload, Bell, MapPin, Link as LinkIcon, Calendar, ArrowRight, TrendingUp, Wallet } from "lucide-react";
+import { User, LoaderCircle, Share, X, Save, Camera, Heart, MessageCircle, Plus, Upload, Bell, MapPin, Link as LinkIcon, Calendar, ArrowRight, TrendingUp, ChevronUp, ChevronDown } from "lucide-react";
 import { ethers } from "ethers";
 
 const ArtistFollowingStrip = ({ artists = [] }) => {
@@ -16,36 +15,94 @@ const ArtistFollowingStrip = ({ artists = [] }) => {
 
   return (
     <div className="mt-12 mb-12">
-      <h2 className="text-2xl mb-4 font-serif">Artists You Follow</h2>
+      <h2 className="text-2xl font-serif text-[#F3E5AB]">
+        Artists You Follow
+      </h2>
 
-      {/* Grey Horizontal Strip */}
-      <div className="w-full bg-black border-2 border-[#7C3AED] rounded-2xl p-4 overflow-x-auto">
-        <div className="flex gap-4">
+      {/* Horizontal Avatar Strip */}
+      <div className="w-full bg-black rounded-2xl p-1 overflow-x-auto overflow-y-visible">
+        <div className="flex items-center gap-1 relative">
           {artists.map((artist) => (
             <Link
               key={artist.artistAddress}
               to={`/artist/${artist.artistAddress}`}
-              className="flex items-center gap-3 min-w-max bg-[#2a2a2a] hover:bg-[#323232] transition-all px-4 py-2 rounded-xl border border-[#7C3AED]/40 hover:border-[#7C3AED] hover:shadow-lg hover:shadow-[#7C3AED]/40"
+              className="relative group"
             >
               {/* Avatar */}
-              <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10">
-                {artist.pfpHash && (
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black 
+                              transition-all duration-300 
+                              group-hover:scale-110 
+                              group-hover:border-[#7C3AED]">
+                {artist.pfpHash ? (
                   <img
                     src={`https://gateway.pinata.cloud/ipfs/${artist.pfpHash}`}
                     alt={artist.name}
                     className="w-full h-full object-cover"
                   />
+                ) : (
+                  <div className="w-full h-full bg-white/10" />
                 )}
               </div>
 
-              {/* Name */}
-              <div>
-                <p className="text-sm font-semibold text-white">
-                  {artist.name || "Unnamed"}
-                </p>
-                <p className="text-xs text-gray-400">
-                  @{artist.username || "username"}
-                </p>
+              {/* Tooltip */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-8 
+                              opacity-0 group-hover:opacity-100 
+                              transition-all duration-200 
+                              bg-[#1f1f1f] text-white text-xs 
+                              px-3 py-1 rounded-md shadow-lg 
+                              whitespace-nowrap z-50 pointer-events-none">
+                {artist.name || "Unnamed"}
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ArtistFollowerStrip = ({ artists = [] }) => {
+  if (!artists.length) return null;
+
+  return (
+    <div className="mt-12 mb-12">
+      <h2 className="text-2xl font-serif text-[#F3E5AB]">
+        Your Followers
+      </h2>
+
+      {/* Horizontal Avatar Strip */}
+      <div className="w-full bg-black rounded-2xl p-1 overflow-x-auto overflow-y-visible">
+        <div className="flex items-center gap-1 relative">
+          {artists.map((artist) => (
+            <Link
+              key={artist.artistAddress}
+              to={`/artist/${artist.artistAddress}`}
+              className="relative group"
+            >
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-black 
+                              transition-all duration-300 
+                              group-hover:scale-110 
+                              group-hover:border-[#7C3AED]">
+                {artist.pfpHash ? (
+                  <img
+                    src={`https://gateway.pinata.cloud/ipfs/${artist.pfpHash}`}
+                    alt={artist.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-white/10" />
+                )}
+              </div>
+
+              {/* Tooltip */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-8 
+                              opacity-0 group-hover:opacity-100 
+                              transition-all duration-200 
+                              bg-[#1f1f1f] text-white text-xs 
+                              px-3 py-1 rounded-md shadow-lg 
+                              whitespace-nowrap z-50 pointer-events-none">
+                {artist.name || "Unnamed"}
               </div>
             </Link>
           ))}
@@ -56,11 +113,12 @@ const ArtistFollowingStrip = ({ artists = [] }) => {
 };
 
 
+
 const Profile = () => {
-  const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
+  const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-5/version/latest";
 
   const { contract, address, isConnected, artist, fetchArtist } = useArtistContext();
-  const { artworks, fetchArtworks, artists, owners, auction } = useQueryContext();
+  const { artworks, fetchArtworks, fetchArtists, artists, owners, auction, followersList, following, withdrawals, fetchWithdrawals } = useQueryContext();
 
   const loggedArtistAddress = artist?.artistAddress?.toLowerCase();
 
@@ -87,11 +145,12 @@ const Profile = () => {
     }
   };
 
-  console.log("PENDING WITHDRAWALS:", withdrawalInfo);
 
   useEffect(() => {
     fetchWithdrawalInfo();
   }, []);
+
+
 
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -103,6 +162,67 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [showWithdrawHistory, setShowWithdrawHistory] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [pendingWithdrawal, setPendingWithdrawal] = useState([]);
+
+  const withdrawnAuctions = new Set(
+    withdrawals.map((w) => w.auctionID.toString())
+  );
+
+  useEffect(() => {
+    if (!withdrawalInfo?.length || !auction?.length) return;
+
+    const grouped = {};
+
+    withdrawalInfo.forEach((bidItem) => {
+      const auctionObject = auction.find(
+        (a) => a.auctionID.toString() === bidItem.auctionID.toString()
+      );
+
+      if (!auctionObject) return;
+
+      // ✅ NEW: Skip if this auction is already withdrawn
+      if (withdrawnAuctions.has(auctionObject.auctionID.toString())) return;
+
+      const artworkObject = artworks?.find(
+        (item) =>
+          item?.artworkID?.toString() === auctionObject?.artID?.toString()
+      );
+
+      const isWinningBid =
+        auctionObject.winningBid?.toString() === bidItem.bid.toString();
+
+      if (auctionObject?.ended && !isWinningBid) {
+        if (!grouped[auctionObject?.auctionID]) {
+          grouped[auctionObject?.auctionID] = {
+            auctionID: auctionObject?.auctionID,
+            artworkObject: artworkObject,
+            bids: [],
+            totalAmount: 0n,
+          };
+        }
+
+        grouped[auctionObject?.auctionID].bids.push(bidItem);
+        grouped[auctionObject?.auctionID].totalAmount += BigInt(bidItem.bid);
+      }
+    });
+
+    setPendingWithdrawal(Object.values(grouped));
+  }, [withdrawalInfo, auction, withdrawals]); // ✅ also add withdrawals as dependency
+
+
+  console.log("PENDING WITHDRAWALS:", pendingWithdrawal);
+
+
+  const toggleDropdown = (auctionId) => {
+    setOpenDropdown((prev) =>
+      prev === auctionId ? null : auctionId
+    );
+  };
+
+
+
+
 
 
   const imageRef = useRef(null);
@@ -276,6 +396,25 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const profileImageRef = useRef(null);
 
+  const handleWithdraw = async (auctionId) => {
+    try {
+      if (!isConnected || !address || !contract) return;
+      const tx = await contract.withdrawRefund(auctionId);
+      await tx.wait();
+      setPendingWithdrawal(prev =>
+        prev.filter(item => item.auctionID !== auctionId)
+      );
+      await fetchWithdrawalInfo();
+      await fetchWithdrawals();
+      toast.success("Withdrawal successful");
+
+    } catch (err) {
+      toast.error("Withdrawal failed");
+      console.error(err);
+    }
+  };
+
+
 
   useEffect(() => {
     if (!artistObject) return;
@@ -350,6 +489,8 @@ const Profile = () => {
       setIsEditing(false);
 
       toast.success("Profile updated successfully");
+      await fetchArtist();
+      await fetchArtists();
     } catch (error) {
       console.log("edit error:", error);
       toast.error("Something went wrong");
@@ -389,93 +530,19 @@ const Profile = () => {
     });
   };
 
-  // ============================================================
-  // PENDING WITHDRAWALS LOGIC
-  // ============================================================
+  //console.log("FOLLOWING:", following);
 
-  // STEP 1: Group withdrawals by auctionID and merge bids
-  const groupedWithdrawals = withdrawalInfo.reduce((acc, withdrawal) => {
-    const auctionID = withdrawal.auctionID;
+  const followingSet = new Set(
+    (following || [])
+      .map(item => item.artist?.toLowerCase())
+  );
 
-    if (!acc[auctionID]) {
-      acc[auctionID] = {
-        auctionID,
-        bids: [],
-        totalBids: 0
-      };
-    }
+  const followersSet = new Set(
+    (followersList || [])
+      .map(item => item.follower?.toLowerCase())
+  );
 
-    acc[auctionID].bids.push(withdrawal.bid);
-    acc[auctionID].totalBids += 1;
-
-    return acc;
-  }, {});
-
-  // STEP 2 & 3: Filter valid withdrawable auctions and get artwork data
-  const withdrawableAuctions = Object.values(groupedWithdrawals)
-    .map((grouped) => {
-      // Find auction
-      const auctionData = auction?.find(
-        (a) => a.auctionID === grouped.auctionID
-      );
-
-      if (!auctionData) return null;
-
-      // Check if auction ended
-      if (!auctionData.ended) return null;
-
-      // Check if user is winner
-      if (auctionData.winner?.toLowerCase() === loggedArtistAddress) return null;
-
-      // Find artwork
-      const artworkData = artworks.find(
-        (art) => art.artworkID === auctionData.artID
-      );
-
-      if (!artworkData) return null;
-
-      // Calculate total amount
-      const totalAmount = grouped.bids.reduce((sum, bid) => {
-        return sum + parseFloat(ethers.formatEther(bid));
-      }, 0);
-
-      return {
-        ...grouped,
-        auction: auctionData,
-        artwork: artworkData,
-        totalAmount
-      };
-    })
-    .filter(Boolean);
-
-  // STEP 5: Withdraw handler
-  const [withdrawingAuction, setWithdrawingAuction] = useState(null);
-
-  const handleWithdraw = async (auctionID) => {
-    if (!isConnected || !address || !contract) {
-      toast.error("Please connect your wallet");
-      return;
-    }
-
-    try {
-      setWithdrawingAuction(auctionID);
-
-      const tx = await contract.withdraw(auctionID);
-      await tx.wait();
-
-      toast.success("Withdrawal successful!");
-
-      // Refresh withdrawal data
-      await fetchWithdrawalInfo();
-
-    } catch (error) {
-      console.log("Withdraw error:", error);
-      toast.error("Withdrawal failed. Please try again.");
-    } finally {
-      setWithdrawingAuction(null);
-    }
-  };
-
+  //console.log(followingSet);
 
   return (
     <div className="min-h-screen bg-black text-white pb-20">
@@ -489,7 +556,7 @@ const Profile = () => {
 
             {/* Header */}
             <div className="p-6 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-[#F3E5AB] to-[#7C3AED] bg-clip-text text-transparent">
+              <h2 className="text-2xl font-bold text-[#F3E5AB]">
                 Create Artwork
               </h2>
               <button
@@ -611,8 +678,16 @@ const Profile = () => {
                 disabled={isLoading}
                 className="flex-1 px-6 py-3 rounded-xl bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
               >
-                {isLoading ? "Creating..." : "Create Artwork"}
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <LoaderCircle className="w-4 h-4 animate-spin" />
+                    Creating...
+                  </span>
+                ) : (
+                  "Create Artwork"
+                )}
               </button>
+
             </div>
           </div>
         </div>
@@ -743,7 +818,7 @@ const Profile = () => {
                       </div>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-2xl px-8 py-4 backdrop-blur-sm">
-                      <div className="text-3xl font-bold text-[#F3E5AB]">{filteredArtworks.length}</div>
+                      <div className="text-3xl font-bold text-[#F3E5AB]">{followingSet.size}</div>
                       {/* ?????????? */}
                       <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mt-1">
                         Following
@@ -851,153 +926,108 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* ============================================================ */}
-        {/* PENDING WITHDRAWALS SECTION */}
-        {/* ============================================================ */}
-        {withdrawableAuctions.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <Wallet className="text-[#7C3AED]" size={28} />
-                <h2 className="text-3xl font-bold">Pending Withdrawals</h2>
-              </div>
-              <span className="px-4 py-2 rounded-full bg-[#7C3AED]/20 text-[#F3E5AB] font-semibold text-sm">
-                {withdrawableAuctions.length} Available
-              </span>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {withdrawableAuctions.map((item) => (
-                <div
-                  key={item.auctionID}
-                  className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-white/10 rounded-2xl p-6 hover:border-[#7C3AED]/50 transition-all group"
-                >
-                  <div className="flex gap-5">
-                    {/* Artwork Image */}
-                    <div className="flex-shrink-0">
-                      <div className="w-28 h-28 rounded-xl overflow-hidden border-2 border-white/10 group-hover:border-[#7C3AED]/50 transition-all">
-                        <img
-                          src={`https://gateway.pinata.cloud/ipfs/${item.artwork.ipfsHash}`}
-                          alt={item.artwork.artworkTitle}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold mb-2 text-white">
-                        {item.artwork.artworkTitle}
-                      </h3>
-                      <p className="text-sm text-gray-400 mb-3">
-                        {item.totalBids} {item.totalBids === 1 ? "bid" : "bids"} placed
-                      </p>
-
-                      {/* Individual Bids */}
-                      <div className="space-y-1 mb-4">
-                        {item.bids.map((bid, idx) => (
-                          <div
-                            key={idx}
-                            className="text-xs text-gray-500 flex items-center gap-2"
-                          >
-                            <div className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]"></div>
-                            Bid {idx + 1}: {ethers.formatEther(bid)} ETH
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Total and Button */}
-                      <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                        <div>
-                          <div className="text-xs text-gray-500 mb-1">Total Amount</div>
-                          <div className="text-2xl font-bold text-[#F3E5AB]">
-                            {item.totalAmount.toFixed(4)} ETH
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => handleWithdraw(item.auctionID)}
-                          disabled={withdrawingAuction === item.auctionID}
-                          className="px-6 py-3 rounded-xl bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 flex items-center gap-2"
-                        >
-                          {withdrawingAuction === item.auctionID ? (
-                            "Processing..."
-                          ) : (
-                            <>
-                              Withdraw <ArrowRight size={18} />
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================ */}
-{/* WITHDRAWAL ROW – STATIC WITH DROPDOWN */}
-{/* ============================================================ */}
-<section className="mb-10">
-  <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 md:p-8">
-
-    {/* Top Row */}
-    <div className="flex justify-between items-center gap-6">
-      <div className="flex items-center gap-6">
-        <div className="w-14 h-14 bg-[#7C3AED]/10 rounded-2xl flex items-center justify-center text-[#7C3AED]">
-          <Wallet size={28} />
-        </div>
-
-        <div>
-          <h4 className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-1 font-bold">
-            Withdrawal Balance
-          </h4>
-          <p className="text-3xl font-serif font-bold text-[#F3E5AB]">
-            1.245 ETH
-          </p>
-        </div>
-      </div>
-
-      {/* Arrow */}
-      <button
-        onClick={() => setShowWithdrawHistory(!showWithdrawHistory)}
-        className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
-      >
-        {showWithdrawHistory ? "⌃" : "⌄"}
-      </button>
-    </div>
-
-    {/* Dropdown Content */}
-    {showWithdrawHistory && (
-      <div className="mt-6 pt-6 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2">
-        
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-zinc-300">Dreamscape #12</span>
-          <span className="text-[#7C3AED] font-mono font-bold">+0.45 ETH</span>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-zinc-300">Neon Silence</span>
-          <span className="text-[#7C3AED] font-mono font-bold">+0.30 ETH</span>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <span className="text-sm text-zinc-300">Astral Bloom</span>
-          <span className="text-[#7C3AED] font-mono font-bold">+0.495 ETH</span>
-        </div>
-
-      </div>
-    )}
-  </div>
-</section>
 
 
         <ArtistFollowingStrip
-          artists={artists.filter(
-            (a) => a.artistAddress?.toLowerCase() !== loggedArtistAddress
+          artists={artists.filter((a) =>
+            followingSet.has(a.artistAddress?.toLowerCase())
           )}
         />
+        <ArtistFollowerStrip
+          artists={artists.filter((a) =>
+            followersSet.has(a.artistAddress?.toLowerCase())
+          )}
+        />
+
+
+        {/* ============================================================ */}
+        {/* WITHDRAWAL ROW – STATIC WITH DROPDOWN */}
+        {/* ============================================================ */}
+        <h4 className="text-2xl text-[#F3E5AB] mb-1 font-serif">
+          Pending Withdrawals
+        </h4>
+        <section className="mb-10 space-y-6">
+          {pendingWithdrawal.map((auction) => (
+            <div
+              key={auction.auctionID}
+              className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 md:p-8"
+            >
+              {/* Top Row */}
+              <div className="flex justify-between items-center gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 bg-[#7C3AED]/10 rounded-2xl flex items-center justify-center text-[#7C3AED]">
+                    <img
+                      key={auction.artworkObject?.id}
+                      src={`https://gateway.pinata.cloud/ipfs/${auction.artworkObject?.ipfsHash}`}
+                      alt={auction.artworkObject?.artworkTitle}
+                      className="max-w-full max-h-[500px] object-contain pointer-events-none"
+                      onContextMenu={(e) => e.preventDefault()}
+                      onDragStart={(e) => e.preventDefault()}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-zinc-400">
+                      {auction.artworkObject?.artworkTitle}
+                    </p>
+
+                    <p className="text-3xl font-serif font-bold text-[#F3E5AB]">
+                      {ethers.formatEther(auction.totalAmount)} ETH
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Withdraw Button */}
+                  <button
+                    onClick={() => handleWithdraw(auction.auctionID)}
+                    disabled={isLoading}
+                    className="px-5 py-2 rounded-xl bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <LoaderCircle className="w-4 h-4 animate-spin" />
+                        Withdrawing...
+                      </span>
+                    ) : (
+                      "Withdraw"
+                    )}
+                  </button>
+
+
+                  {/* Dropdown Toggle */}
+                  <button
+                    onClick={() => toggleDropdown(auction.auctionId)}
+                    className="p-1 px-2 rounded-xl  hover:bg-white/10  transition-all"
+                  >
+                    {openDropdown === auction.auctionId ? <ChevronUp /> : <ChevronDown />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Dropdown Content */}
+              {openDropdown === auction.auctionId && (
+                <div className="mt-6 pt-6 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2">
+                  {auction.bids.map((bid, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="text-sm text-zinc-300">
+                        Bid #{index + 1}
+                      </span>
+                      <span className="text-[#7C3AED] font-mono font-bold">
+                        +{ethers.formatEther(bid.bid)} ETH
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </section>
+
 
 
         {/* ============================================================ */}

@@ -8,77 +8,134 @@ import { Link } from "react-router-dom";
 import Modal from "../components/Modal";
 import { GET_BID_HISTORY } from "../lib/GraphqlQueries";
 import { request, gql } from "graphql-request";
+import { Heart, LoaderCircle } from "lucide-react";
+import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const ArtPage = () => {
-
-  const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
-
+  const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-5/version/latest";
 
   const [open, setOpen] = useState(false);
   const [currentOwner, setCurrentOwner] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [bids, setBids] = useState([]);
+  const [showBids, setShowBids] = useState(false);
+
+  const [ethToInr, setEthToInr] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const price = await fetchEthPriceINR();
+        setEthToInr(price);
+      } catch (err) {
+        console.log("Failed to fetch ETH price", err);
+      }
+    };
+
+    load();
+  }, []);
+
+
+  // --- NEW LIKE STATES ---
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 20)); // Dummy initial count
+
 
   const { artist, contract, isConnected, address } = useArtistContext();
-
-  const { artworks, auction, DS, artists } = useQueryContext();
+  const { artworks, auction, DS, artists, fetchArtworks, fetchAuction, fetchDS, likedArtworks, fetchLikedArtworks } = useQueryContext();
 
   const { id } = useParams();
   const navigate = useNavigate();
 
   const artwork = useMemo(() => {
     if (!artworks || !id) return null;
-
-    return artworks.find(
-      (a) => String(a.artworkID) === String(id)
-    );
+    return artworks.find((a) => String(a.artworkID) === String(id));
   }, [artworks, id]);
 
+  const [isFavorite, setIsFavorite] = useState(() => {
+    return likedArtworks?.some(
+      (item) => item.artworkID === artwork.artWorkID
+    ) || false;
+  });
+
+  // --- LIKE HANDLER ---
+  // const handleLike = () => {
+  //   setIsLiked(!isLiked);
+  //   setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+  //   toast.success(isLiked ? "Removed from favorites" : "Added to favorites", {
+  //     style: { background: "#333", color: "#fff", fontSize: "12px" },
+  //   });
+  // };
+
+  const handleFavoriteClick = async (e) => {
+    e.preventDefault();    // stops <Link>
+    e.stopPropagation();  // stops bubbling
+
+
+    try {
+      if (!isConnected || !address || !contract) {
+        return;
+      }
+
+
+
+      console.log("liked", artwork.artworkID);
+
+      setIsFavorite((prev) => !prev);
+      const like = await contract.LikeUnlike(artwork.artworkID);
+      await like.wait();
+
+
+
+      fetchLikedArtworks();
+      fetchArtworks();
+
+    } catch (error) {
+      setIsFavorite((prev) => !prev);
+      console.log("error in liking", error);
+      if (artwork?.originalArtist?.toLowerCase() === loggedArtistAddress.toLowerCase()) {
+        toast.error("Cannot like own Artwork")
+      }
+      else {
+        toast.error("Something went wrong, Please try again later");
+      }
+    }
+
+  };
+
   const artistObject = artists?.find(
-    (item) =>
-      item?.artistAddress?.toLowerCase() === artwork?.originalArtist?.toLowerCase()
+    (item) => item?.artistAddress?.toLowerCase() === artwork?.originalArtist?.toLowerCase()
   );
 
-  const auctionObject = auction?.find(
-    (item) => item.artID === artwork.artworkID
-  );
-
-  console.log(auctionObject);
+  const auctionObject = auction?.find((item) => item.artID === artwork.artworkID);
 
   let aucBasePriceWei = auctionObject?.basePrice;
-  const priceInEthAuc = aucBasePriceWei
-    ? ethers.formatEther(aucBasePriceWei)
-    : "0";
+  const priceInEthAuc = aucBasePriceWei ? ethers.formatEther(aucBasePriceWei) : "0";
 
   let aucWinningPriceWei = auctionObject?.winningBid;
-  const priceInEthWin = aucWinningPriceWei
-    ? ethers.formatEther(aucWinningPriceWei)
-    : "0";
+  const priceInEthWin = aucWinningPriceWei ? ethers.formatEther(aucWinningPriceWei) : "0";
 
   let AuctionID = auctionObject?.auctionID;
 
-  const dsObject = DS.find(
-    (item) => item.artworkID === artwork.artworkID
-  );
-
+  const dsObject = DS.find((item) => item.artworkID === artwork.artworkID);
   const DSid = dsObject?.directSaleID;
 
   let dsPriceWei = dsObject?.price;
-  const priceInEth = dsPriceWei
-    ? ethers.formatEther(dsPriceWei)
-    : "0";
-
-  console.log(priceInEth)
+  const priceInEth = dsPriceWei ? ethers.formatEther(dsPriceWei) : "0";
 
   let loggedArtistAddress = artist.artistAddress.toLowerCase();
 
+  const priceInInr = ethToInr ? Number(priceInEth) * ethToInr : null;
+  const priceInInrAuc = ethToInr
+    ? Number(priceInEthAuc) * ethToInr
+    : null;
+  const priceInInrWin = ethToInr
+    ? Number(priceInEthWin) * ethToInr
+    : null;
+
   const fetchBids = async () => {
     try {
-      const data = await request(GRAPHQL_ENDPOINT, GET_BID_HISTORY,
-        {
-          aucID: AuctionID
-        });
-      console.log("Graph response:", data);
+      const data = await request(GRAPHQL_ENDPOINT, GET_BID_HISTORY, { aucID: AuctionID });
       setBids(data.bidPlaceds);
     } catch (err) {
       console.log(err.message);
@@ -90,36 +147,26 @@ const ArtPage = () => {
     fetchBids();
   }, [auctionObject]);
 
- 
-    console.log("BIDS UPDATED:", bids);
-  
+  console.log(bids);
 
   useEffect(() => {
     const fetchOwner = async () => {
       try {
         if (!contract || !artwork?.artworkID) return;
-
         const owner = await contract.checkOwnership(artwork.artworkID);
         setCurrentOwner(owner);
       } catch (error) {
         console.error("Error fetching owner:", error);
       }
     };
-
     fetchOwner();
   }, [contract, artwork]);
 
   const ownerObject = artists?.find(
-    (item) =>
-      item?.artistAddress?.toLowerCase() === currentOwner?.toLowerCase()
+    (item) => item?.artistAddress?.toLowerCase() === currentOwner?.toLowerCase()
   );
 
-  console.log(ownerObject);
-
-
   const [tick, setTick] = useState(0);
-
-  // Logic for roles
   const isCreator = artwork?.originalArtist.toLowerCase() === loggedArtistAddress;
   const isCollector = currentOwner && currentOwner.toLowerCase() !== artwork.originalArtist.toLowerCase();
   const isCurrentlyForSale = artwork?.available;
@@ -131,81 +178,60 @@ const ArtPage = () => {
   }, [artwork?.saleType]);
 
   const getTimeRemaining = (auctionObj) => {
-  if (!auctionObj?.endTime) return undefined;
-
-  const now = Date.now();
-  const end = Number(auctionObj.endTime) * 1000;
-
-  const diff = end - now;
-  if (diff <= 0) return null;
-
-  const totalSeconds = Math.floor(diff / 1000);
-
-  const days = Math.floor(totalSeconds / (24 * 3600));
-  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return { days, hours, minutes, seconds };
-};
-
+    if (!auctionObj?.endTime) return undefined;
+    const now = Date.now();
+    const end = Number(auctionObj.endTime) * 1000;
+    const diff = end - now;
+    if (diff <= 0) return null;
+    const totalSeconds = Math.floor(diff / 1000);
+    const days = Math.floor(totalSeconds / (24 * 3600));
+    const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return { days, hours, minutes, seconds };
+  };
 
   const remainingTime = useMemo(
-  () =>
-    artwork?.saleType === "auction"
-      ? getTimeRemaining(auctionObject)
-      : null,
-  [auctionObject, tick]
-);
-
+    () => (artwork?.saleType === "auction" ? getTimeRemaining(auctionObject) : null),
+    [auctionObject, tick]
+  );
 
   if (!artwork) return <div className="p-10 text-[#F3E5AB] bg-[#050505] min-h-screen">Art not found</div>;
 
   const handleEndSale = async () => {
     try {
       setIsLoading(true);
-
-      if (!isConnected || !address || !contract) {
-        return;
-      }
-
-      console.log(DSid);
-
+      if (!isConnected || !address || !contract) return;
       const endDS = await contract.endDS(DSid);
-
       await endDS.wait();
       toast.success("Direct Sale ended");
 
-      // Reset state
+      await fetchArtworks();
+      await fetchDS();
+
       setIsLoading(false);
     } catch (error) {
-      console.log("error in ending sale", error);
-      toast.error("Something went wrong, Please try again later");
+      toast.error("Something went wrong");
       setIsLoading(false);
     }
   };
 
+  console.log(DS);
+
   const handleEndAuction = async () => {
     try {
       setIsLoading(true);
-
-      if (!isConnected || !address || !contract) {
-        return;
-      }
-
-
-
+      if (!isConnected || !address || !contract) return;
       const endAuction = await contract.endAuction(AuctionID);
-
       await endAuction.wait();
-      console.log(AuctionID);
       toast.success("Auction ended");
 
-      // Reset state
+      await fetchArtworks();
+      await fetchAuction();
+
       setIsLoading(false);
     } catch (error) {
-      console.log("error in ending auction", error);
-      toast.error("Something went wrong, Please try again later");
+      toast.error("Something went wrong");
       setIsLoading(false);
     }
   };
@@ -213,16 +239,28 @@ const ArtPage = () => {
   return (
     <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center p-6">
       <div className="max-w-6xl w-full space-y-4">
-
         <button onClick={() => navigate(-1)} className="text-xs font-bold tracking-[0.2em] text-neutral-500 hover:text-[#F3E5AB] flex items-center gap-2 uppercase transition-colors">
           ← Go Back
         </button>
 
         <div className="checkout-container border border-white/10 rounded-[24px] w-full flex flex-col md:flex-row overflow-hidden shadow-2xl bg-white/5 backdrop-blur-xl">
-
           {/* LEFT: Image Section */}
-          <div className="md:w-1/2 bg-neutral-900/40 flex items-center justify-center p-6 border-r border-white/5">
-            <img key={artwork.id} src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`} alt={artwork.artworkTitle} className="max-w-full max-h-[500px] object-contain rounded-lg shadow-2xl" />
+          <div className="md:w-1/2 bg-neutral-900/40 flex items-center justify-center p-6 border-r border-white/5 relative select-none">
+            <div className="relative inline-block overflow-hidden rounded-lg shadow-2xl">
+              <img
+                key={artwork.id}
+                src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
+                alt={artwork.artworkTitle}
+                className="max-w-full max-h-[500px] object-contain pointer-events-none"
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="transform -rotate-45 text-white/80 font-black text-2xl tracking-[0.3em] whitespace-nowrap mix-blend-overlay drop-shadow-md">
+                  CURA © PROTECTED
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* RIGHT: Info Section */}
@@ -232,16 +270,39 @@ const ArtPage = () => {
                 <span className="text-[10px] font-bold tracking-[0.2em] text-[#7C3AED] uppercase">
                   {artwork.saleType}
                 </span>
-                <h1 className="text-5xl font-serif text-[#F3E5AB] mt-2 leading-tight">{artwork.artworkTitle}</h1>
+
+                {/* --- TITLE & LIKE BUTTON ROW --- */}
+                <div className="flex items-center justify-between mt-2 gap-4">
+                  <h1 className="text-5xl font-serif text-[#F3E5AB] leading-tight">
+                    {artwork.artworkTitle}
+                  </h1>
+
+                  <button
+                    onClick={handleFavoriteClick}
+                    className="flex items-center gap-2 group cursor-pointer active:scale-90 transition-transform"
+                  >
+                    <div className={`p-2 rounded-full border transition-all ${isFavorite ? 'bg-red-500/10 border-red-500/50' : 'bg-white/5 border-white/10 group-hover:border-white/20'}`}>
+                      <Heart
+                        size={22}
+                        className={`transition-colors ${isFavorite ? 'text-red-500 fill-red-500' : 'text-neutral-500 group-hover:text-neutral-300'}`}
+                      />
+                    </div>
+                    <span className={`text-sm font-mono font-bold ${isFavorite ? 'text-red-500' : 'text-neutral-500'}`}>
+                      {artwork.likes}
+                    </span>
+                  </button>
+                </div>
+
                 <p className="text-sm text-neutral-400 mt-2">
                   Original Artist: <span className="text-white font-medium">{artistObject?.name}</span>
                 </p>
-                <p className="text-sm text-neutral-400 mt-2">
-                  Seller: <span className="text-white font-medium">{ownerObject?.name}</span>
-                </p>
+                {artwork.saleType !== "" && (
+                  <p className="text-sm text-neutral-400 mt-2">
+                    Seller: <span className="text-white font-medium">{ownerObject?.name}</span>
+                  </p>
+                )}
               </div>
 
-              {/* Description */}
               <div className="pt-2">
                 <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-2">Description</p>
                 <p className="text-sm text-neutral-400 leading-relaxed font-light">
@@ -249,47 +310,52 @@ const ArtPage = () => {
                 </p>
               </div>
 
-              <div className="pt-2">
-                {artwork.saleType === "auction" && (
-                  <div className="flex items-center gap-2">
-                    <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold mt-1">
-                      Base Price:
-                    </p>
-                    <p className="text-sm text-neutral-400 font-light">
-                      {priceInEthAuc} ETH
-                    </p>
-                  </div>
-                )}
-              </div>
+              {artwork.saleType === "auction" && (
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Base Price:</p>
+                  <p className="text-sm text-neutral-400 font-light">
+                    {priceInEthAuc} ETH{" "}
+                    {priceInInrAuc && (
+                      <span className="text-neutral-500">
+                        (₹ {priceInInrAuc.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                      </span>
+                    )}
+                  </p>
 
-              {/* Pricing Section - Always Visible */}
+                </div>
+              )}
+
               <div className="bg-white/5 rounded-xl p-6 border border-white/5">
                 <div className="flex justify-between items-center">
                   <div>
-                    {artwork.saleType === "auction" && (
+                    {artwork.saleType === "auction" ? (
                       <>
-                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">
-                          Current Bid
-                        </p>
+                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">Current Bid</p>
                         <p className="text-3xl font-bold text-[#7C3AED]">
-                          {priceInEthWin} ETH
+                          {priceInEthWin} ETH{" "}
+                          {priceInInrWin !== null && (
+                            <span className="text-lg text-neutral-400 font-normal">
+                              (₹ {priceInInrWin.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                            </span>
+                          )}
                         </p>
                       </>
-                    )}
-
-                    {artwork.saleType === "direct" && (
+                    ) : artwork.saleType === "direct" ? (
                       <>
-                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">
-                          Price
-                        </p>
+                        <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">Price</p>
                         <p className="text-3xl font-bold text-[#7C3AED]">
-                          {priceInEth} ETH
+                          {priceInEth} ETH{" "}
+                          {priceInInr && (
+                            <span className="text-lg text-neutral-400 font-normal">
+                              (₹ {priceInInr.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                            </span>
+                          )}
                         </p>
                       </>
+                    ) : (
+                      <p className="text-xl uppercase tracking-widest font-bold text-[#7C3AED]">Currently not Listed for sale </p>
                     )}
                   </div>
-
-
                   {artwork.saleType === "auction" && remainingTime && (
                     <div className="text-right">
                       <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">Time Left</p>
@@ -301,99 +367,79 @@ const ArtPage = () => {
                 </div>
               </div>
 
-
+              {artwork.saleType === "auction" && (
+                <div className="pt-2">
+                  <button onClick={() => setShowBids(!showBids)} className="w-full text-[10px] text-neutral-500 uppercase tracking-widest font-bold mb-2 flex justify-between items-center hover:text-neutral-300">
+                    <span>Past Bids ({bids?.length || 0})</span>
+                    <span>{showBids ? "▲" : "▼"}</span>
+                  </button>
+                  {showBids && (
+                    <div className="max-h-[140px] overflow-y-auto space-y-2 pr-2 bg-white/5 rounded-xl p-3 border border-white/5">
+                      {bids.length > 0 ? bids.map((bid, index) => (
+                        <div key={index} className="flex justify-between items-center bg-black/40 p-3 rounded-lg">
+                          <span className="text-sm text-neutral-300 font-mono">{bid.bidder.slice(0, 6)}...{bid.bidder.slice(-4)}</span>
+                          <span className="text-sm text-[#F3E5AB] font-bold">{ethers.formatEther(bid.bid)} ETH</span>
+                        </div>
+                      )) : <div className="text-center py-4 text-sm text-neutral-500 italic">No bids yet.</div>}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* ACTION BUTTONS - Conditional Based on Ownership */}
             <div className="mt-10">
               {isCreator ? (
-                /* Creator Buttons */
                 <div className="flex flex-col gap-3">
-                  {/* SELL ARTWORK */}
-                  {isCurrentlyForSale && (currentOwner?.toLowerCase()===loggedArtistAddress) && (
-                    <button
-                      onClick={() => setOpen(true)}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"
-                    >
-                      SELL ARTWORK
-                    </button>
+                  {isCurrentlyForSale && (currentOwner?.toLowerCase() === loggedArtistAddress) && (
+                    <button onClick={() => setOpen(true)} className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs bg-[#7C3AED] hover:bg-[#5f2db7] cursor-pointer text-[#F3E5AB]">SELL ARTWORK</button>
                   )}
-
-                  {/* END AUCTION */}
                   {!isCurrentlyForSale && artwork?.saleType === "auction" && (
                     <button
                       onClick={handleEndAuction}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"
+                      disabled={isLoading}
+                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      END AUCTION
+                      {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <LoaderCircle className="w-4 h-4 animate-spin" />
+                          Ending Auction...
+                        </span>
+                      ) : (
+                        "END AUCTION"
+                      )}
                     </button>
                   )}
-
-                  {/* END SALE */}
                   {!isCurrentlyForSale && artwork?.saleType === "direct" && (
                     <button
                       onClick={handleEndSale}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"
+                      disabled={isLoading}
+                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      END SALE
+                      {isLoading ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <LoaderCircle className="w-4 h-4 animate-spin" />
+                          Ending Sale...
+                        </span>
+                      ) : (
+                        "END SALE"
+                      )}
                     </button>
                   )}
-
                 </div>
               ) : isCollector ? (
-                /* Collector (Owner) Buttons */
-                <div className="flex flex-col gap-3">
-                  {isCurrentlyForSale ? (
-                    <button
-                      onClick={() => setOpen(true)}
-                      className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all cursor-pointer"
-                    >
-                      LIST FOR RESALE
-                    </button>
-                  ) : (
-                    <button
-                      //onClick={}
-                      className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all cursor-pointer"
-                    >
-                      END RESALE
-                    </button>
-                  )}
-                </div>
-
+                <button onClick={() => setOpen(true)} className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] cursor-pointer text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs">LIST FOR RESALE</button>
               ) : (
-                /* Public Buyer Button */
-                <>
-                  {artwork.saleType === "auction" ? (
-                    <Link to={`/auctioncheckout/${artwork.artworkID}`}>
-                      <div
-                        className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
-                      // onClick={handlePlaceBid}
-                      >
-                        PLACE YOUR BID
-                      </div>
-                    </Link>
-                  ) : (
-                    <Link to={`/directcheckout/${artwork.artworkID}`}>
-                      <div className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs transition-all active:scale-[0.98] text-center"
-
-                      >
-                        PURCHASE ARTWORK
-                      </div>
-                    </Link>
-                  )}
-
-                </>
+                <Link to={artwork.saleType === "auction" ? `/auctioncheckout/${artwork.artworkID}` : `/directcheckout/${artwork.artworkID}`}>
+                  <div className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] cursor-pointer text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs text-center">
+                    {artwork.saleType === "auction" ? "PLACE YOUR BID" : "PURCHASE ARTWORK"}
+                  </div>
+                </Link>
               )}
             </div>
           </div>
-
         </div>
       </div>
-      <Modal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        id={artwork.artworkID}
-      />
+      <Modal isOpen={open} onClose={() => setOpen(false)} id={artwork.artworkID} />
     </div>
   );
 };

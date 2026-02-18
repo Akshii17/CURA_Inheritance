@@ -1,3 +1,11 @@
+import favicon from './assets/curaa.png';
+
+// Dynamically inject the favicon from the assets folder
+const link = document.querySelector("link[rel~='icon']");
+if (link) {
+  link.href = favicon;
+}
+
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
@@ -25,12 +33,11 @@ const queryClient = new QueryClient();
 
 const config = getDefaultConfig({
   appName: "cura",
-  // projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
-  projectId:"7355e9ea606b9bd11e2395eafc4aa1d6",
+  projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID,
   chains: [sepolia],
   // ssr: true, // If your dApp uses server side rendering (SSR)
   transports: {
-    [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/PHX4a063CZKRHksCdw8ao"),
+    [sepolia.id]: http(import.meta.env.VITE_SEPOLIA_ID),
 
 
   }

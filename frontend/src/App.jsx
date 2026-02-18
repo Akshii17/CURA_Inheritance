@@ -21,8 +21,9 @@ import AuctionCheckout from "./pages/AuctionCheckout";
 import ArtistProfile from "./pages/ArtistProfile";
 import NotFound from "./pages/NotFound";
 import { useArtistContext } from "./context/ArtistContext";
-import Test from "./Test";
-import Testing from "./pages/Testing";
+
+import DSTransactionSuccess from "./pages/DSTransactionSuccess";
+import AuctionBidPlaced from "./pages/AuctionBidPlaced";
 
 
 const App = () => {
@@ -98,7 +99,6 @@ const App = () => {
         <Route path="" element={isAuthed ? <Home /> : <Navigate to="/join" />} />
         <Route path="join" element={!isAuthed ? <Landing /> : <Navigate to="/" />} />
         <Route path="explore" element={isAuthed ? <Explore /> : <Navigate to="/join" />}/>
-        <Route path="testing" element={<Testing />}/>
 
 
         <Route path="studio" element={isAuthed ? <Studio /> : <Navigate to="/join" />}/>
@@ -108,11 +108,14 @@ const App = () => {
         <Route path="art/:id" element={isAuthed ? <ArtPage /> : <Navigate to="/join" />}/>
         <Route path="directcheckout/:id" element={isAuthed ? <DirectSaleCheckout /> : <Navigate to="/join"/>}
         />
+        <Route path="success/:id" element={isAuthed ? <DSTransactionSuccess /> : <Navigate to="/join"/>}
+        />
         <Route
           path="auctioncheckout/:id"
           element={isAuthed ? <AuctionCheckout /> : <Navigate to="/join" />}
         />
-        <Route path="test" element={<Test/>} />
+        <Route path="bidplaced/:id" element={isAuthed ? <AuctionBidPlaced /> : <Navigate to="/join"/>}
+        />
         <Route
           path="*"
           element={isAuthed ? <Navigate to="/" /> : <NotFound/>}

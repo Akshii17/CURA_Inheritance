@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useMemo } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Lock } from "lucide-react";
+import { Lock, LoaderCircle } from "lucide-react";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import { ethers } from "ethers";
@@ -10,10 +10,10 @@ import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const DirectSaleCheckout = () => {
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const { contract, address, isConnected } = useArtistContext();
-  const { artworks, fetchArtworks, DS } = useQueryContext();
+  const { artworks, fetchArtworks, DS, artists, fetchDS } = useQueryContext();
 
   const { id } = useParams();
 
@@ -25,17 +25,10 @@ const DirectSaleCheckout = () => {
     );
   }, [artworks, id]);
 
-  const dsObject = DS.find(
-    (item) => item.artworkID === artwork.artworkID
+  const artistObject = artists?.find(
+    (item) => item?.artistAddress?.toLowerCase() === artwork?.originalArtist?.toLowerCase()
   );
 
-  const DSid = dsObject?.directSaleID;
-  if (!artwork) {
-    return <div className="text-white p-10">Artwork not found</div>;
-  }
-
-  let DSpriceWei = dsObject?.price;
-  const priceInEth = ethers.formatEther(DSpriceWei);
 
   const [ethToInr, setEthToInr] = useState(null);
 
@@ -52,6 +45,20 @@ const DirectSaleCheckout = () => {
     load();
   }, []);
 
+  const dsObject = DS.find(
+    (item) => item.artworkID === artwork.artworkID
+  );
+
+  const DSid = dsObject?.directSaleID;
+  if (!artwork) {
+    return <div className="text-white p-10">Artwork not found</div>;
+  }
+
+  let DSpriceWei = dsObject?.price;
+  const priceInEth = ethers.formatEther(DSpriceWei);
+
+  const priceInInr = ethToInr ? Number(priceInEth) * ethToInr : null;
+
 
   const [finalSaleChecked, setFinalSaleChecked] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
@@ -63,17 +70,21 @@ const DirectSaleCheckout = () => {
   const handlePay = async () => {
     try {
       setIsLoading(true);
+
       if (!isConnected || !address || !contract) {
         return;
       }
 
       console.log(DSid);
 
-      const tx = await contract.buyDSArtwork(DSid, {value : DSpriceWei});
+      const tx = await contract.buyDSArtwork(DSid, { value: DSpriceWei });
 
       await tx.wait();
       toast.success("Artwork purchased");
-      navigate(`/art/${artwork.artworkID}`);
+      navigate(`/success/${artwork.artworkID}`);
+
+      fetchDS();
+      fetchArtworks();
 
       // Reset state
       //show
@@ -92,12 +103,21 @@ const DirectSaleCheckout = () => {
         {/* LEFT — ARTWORK (MATCHES AUCTION) */}
         <div className="space-y-6 flex flex-col items-center h-full justify-center">
           <div className="relative w-full max-w-md aspect-square">
+
             <img
               src={`https://gateway.pinata.cloud/ipfs/${artwork.ipfsHash}`}
               alt={artwork.artworkTitle}
-              className="rounded-xl shadow-lg w-full h-full object-cover"
+              className="rounded-xl shadow-lg w-full h-full object-cover pointer-events-none"
+              onContextMenu={(e) => e.preventDefault()}
+              onDragStart={(e) => e.preventDefault()}
             />
 
+            {/* Watermark Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="transform -rotate-45 text-white/20 font-black text-2xl tracking-[0.3em] whitespace-nowrap mix-blend-overlay drop-shadow-md">
+                CURA © PROTECTED
+              </div>
+            </div>
 
           </div>
 
@@ -105,10 +125,11 @@ const DirectSaleCheckout = () => {
             <h1 className="text-3xl font-bold text-[#F3E5AB]">
               {artwork.artworkTitle}
             </h1>
-            <p className="text-gray-400">by {artwork.originalArtist}</p>
+            <p className="text-gray-400">by {artistObject.name}</p>
             {/* <p className="text-gray-400">Sold by: {artwork.currentOwner}</p> */}
           </div>
         </div>
+
 
         {/* RIGHT — CHECKOUT (MATCHES AUCTION HEIGHT) */}
         <div className="bg-white/5 rounded-2xl p-8 space-y-6 backdrop-blur h-full flex flex-col">
@@ -119,15 +140,23 @@ const DirectSaleCheckout = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Artwork Price</span>
-              <span>{priceInEth} ETH </span>
+              <p className="text-2xl font-bold text-[#7C3AED]">
+                {priceInEth} ETH{" "}
+                {priceInInr && (
+                  <span className="text-lg text-neutral-400 font-normal">
+                    (₹ {priceInInr.toLocaleString("en-IN", { maximumFractionDigits: 0 })})
+                  </span>
+                )}
+              </p>
+
             </div>
           </div>
 
           <div className="space-y-1">
             <div className="bg-black/40 px-4 py-3 rounded-xl text-sm truncate border border-white/5">
-              <p>Notice</p>
-              <p>...</p>
-              <p>...</p>
+              <p className="text-bold text-[#F3E5AB]">Notice</p>
+              <p>Once confirmed, purchases cannot be canceled, reversed, or refunded.</p>
+              <p> Upon successful payment, the digital asset is immediately transferred to <br /> your connected wallet.</p>
             </div>
           </div>
 
@@ -163,7 +192,7 @@ const DirectSaleCheckout = () => {
 
             <p>
               You are about to purchase <b>“{artwork.artworkTitle}”</b> by{" "}
-              <b>{artwork.originalArtist}</b> for{" "}
+              <b>{artistObject.name}</b> for{" "}
               <b>{priceInEth} ETH</b>.
             </p>
 
@@ -176,13 +205,22 @@ const DirectSaleCheckout = () => {
             disabled={!canPay}
             onClick={handlePay}
             className={`mt-auto w-full bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] font-bold py-4 rounded-2xl shadow-lg transition uppercase tracking-wider
-              ${canPay
+    ${canPay
                 ? "hover:opacity-90 cursor-pointer"
                 : "opacity-30 cursor-not-allowed"
               }`}
           >
-            Confirm & Pay {priceInEth} ETH
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <LoaderCircle className="w-4 h-4 animate-spin" />
+                Confirming Payment...
+              </span>
+            ) : (
+              `Confirm & Pay ${priceInEth} ETH`
+            )}
           </button>
+
+
         </div>
       </div>
     </div>
