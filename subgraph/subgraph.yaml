@@ -1,0 +1,56 @@
+specVersion: 1.3.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: artAuction
+    network: sepolia
+    source:
+      address: "0x87AdeDeBC2AcBD380D22822142d9E981c3bA40cA"
+      abi: artAuction
+      startBlock: 10271661
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Approval
+        - ApprovalForAll
+        - ArtistState
+        - ArtworkLiked
+        - DSState
+        - FollowUnFollowArtist
+        - Transfer
+        - artworkState
+        - auctionState
+        - bidPlaced
+        - withdraw
+      abis:
+        - name: artAuction
+          file: ./abis/artAuction.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: ArtistState(string,indexed address,string,string,string,uint256,string)
+          handler: handleArtistState
+        - event: ArtworkLiked(indexed address,indexed uint256,string,indexed address,bool)
+          handler: handleArtworkLiked
+        - event: DSState(indexed uint256,uint256,indexed uint256,bool,indexed address)
+          handler: handleDSState
+        - event: FollowUnFollowArtist(indexed address,indexed address,uint256,bool)
+          handler: handleFollowUnFollowArtist
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: artworkState(indexed uint256,string,string,string,string,uint256,uint256,bool,indexed address,bool)
+          handler: handleartworkState
+        - event: auctionState(indexed uint256,address,indexed uint256,indexed address,uint256,uint256,uint256,bool)
+          handler: handleauctionState
+        - event: bidPlaced(address,uint256,uint256)
+          handler: handlebidPlaced
+        - event: withdraw(uint256,indexed address,indexed uint256)
+          handler: handlewithdraw
+      file: ./src/art-auction.ts

@@ -1,0 +1,138 @@
+type Approval @entity(immutable: true) {
+  id: Bytes!
+  owner: Bytes! # address
+  approved: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ApprovalForAll @entity(immutable: true) {
+  id: Bytes!
+  owner: Bytes! # address
+  operator: Bytes! # address
+  approved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ArtistState @entity(immutable: true) {
+  id: Bytes!
+  name: String! # string
+  artistAddress: Bytes! # address
+  username: String! # string
+  bio: String! # string
+  pfpHash: String! # string
+  followerCount: BigInt! # uint256
+  tagline: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ArtworkLiked @entity(immutable: false) {
+  id: String!
+  artist: Bytes! # address
+  artWorkID: BigInt! # uint256
+  name: String! # string
+  liker: Bytes! # address
+  likeUnlikeArtwork: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Follow @entity(immutable: false) {
+  id: ID!
+  follower: Bytes!
+  artist: Bytes!
+  isFollowing: Boolean!
+  blockTimestamp: BigInt!
+}
+
+type DSState @entity(immutable: true) {
+  id: Bytes!
+  directSaleID: BigInt! # uint256
+  price: BigInt! # uint256
+  artworkID: BigInt! # uint256
+  sold: Boolean! # bool
+  seller: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FollowUnFollowArtist @entity(immutable: true) {
+  id: Bytes!
+  artist: Bytes! # address
+  follower: Bytes! # address
+  timestamp: BigInt! # uint256
+  followUnfollow: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Transfer @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type artworkState @entity(immutable: true) {
+  id: Bytes!
+  artworkID: BigInt! # uint256
+  artworkTitle: String! # string
+  description: String! # string
+  saleType: String! # string
+  ipfsHash: String! # string
+  royaltyP: BigInt! # uint256
+  likes: BigInt! # uint256
+  nftMinted: Boolean! # bool
+  originalArtist: Bytes! # address
+  available: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type auctionState @entity(immutable: true) {
+  id: Bytes!
+  auctionID: BigInt! # uint256
+  seller: Bytes! # address
+  artID: BigInt! # uint256
+  winner: Bytes! # address
+  winningBid: BigInt! # uint256
+  basePrice: BigInt! # uint256
+  endTime: BigInt! # uint256
+  ended: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type bidPlaced @entity(immutable: true) {
+  id: Bytes!
+  bidder: Bytes! # address
+  bid: BigInt! # uint256
+  auctionID: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type withdraw @entity(immutable: true) {
+  id: Bytes!
+  amount: BigInt! # uint256
+  receiver: Bytes! # address
+  auctionID: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
