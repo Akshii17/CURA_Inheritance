@@ -6,6 +6,7 @@ import { Lock } from "lucide-react";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import { ethers } from "ethers";
+import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const DirectSaleCheckout = () => {
 
@@ -36,6 +37,20 @@ const DirectSaleCheckout = () => {
   let DSpriceWei = dsObject?.price;
   const priceInEth = ethers.formatEther(DSpriceWei);
 
+  const [ethToInr, setEthToInr] = useState(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const price = await fetchEthPriceINR();
+        setEthToInr(price);
+      } catch (err) {
+        console.log("Failed to fetch ETH price", err);
+      }
+    };
+
+    load();
+  }, []);
 
 
   const [finalSaleChecked, setFinalSaleChecked] = useState(false);
@@ -104,7 +119,7 @@ const DirectSaleCheckout = () => {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Artwork Price</span>
-              <span>{priceInEth} ETH</span>
+              <span>{priceInEth} ETH </span>
             </div>
           </div>
 

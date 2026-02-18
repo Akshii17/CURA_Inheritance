@@ -30,6 +30,7 @@ contract artAuction is ERC721 {
         string username;
         string pfpHash;
         uint followers;
+        string tagline;
     }
     struct Auction {
         uint auctionID;
@@ -96,7 +97,8 @@ contract artAuction is ERC721 {
         string username,
         string bio,
         string pfpHash,
-        uint followerCount
+        uint followerCount,
+        string tagline
     );
     function registerUser(
         string memory _name,
@@ -113,13 +115,15 @@ contract artAuction is ERC721 {
         artist.username,
         artist.bio,
         artist.pfpHash,
-        artist.followers);
+        artist.followers,
+        artist.tagline);
     }
     function editDetails(
         string memory _newName,
         string memory _newUsername,
         string memory _newPFPHash,
-        string memory _bio
+        string memory _bio,
+        string memory _tagline
     ) public {
         require(isRegistered[msg.sender], "Not registered");
         Artist storage artist = artists[msg.sender];
@@ -135,12 +139,16 @@ contract artAuction is ERC721 {
         if (bytes(_bio).length > 0) {
             artist.bio = _bio;
         }
+        if (bytes(_tagline).length > 0) {
+            artist.tagline = _tagline;
+        }
         emit ArtistState(artist.name,
         msg.sender,
         artist.username,
         artist.bio,
         artist.pfpHash,
-        artist.followers);
+        artist.followers,
+        artist.tagline);
     }
     function login() public view returns (Artist memory) {
         require(isRegistered[msg.sender], "Not registered");
@@ -253,6 +261,13 @@ contract artAuction is ERC721 {
             follow = true;
             artist.followers++;
         }
+        emit ArtistState(artist.name,
+        artist.artistAddress,
+        artist.username,
+        artist.bio,
+        artist.pfpHash,
+        artist.followers,
+        artist.tagline);
         emit FollowUnFollowArtist(
             _artistAddr,
             msg.sender,
@@ -307,6 +322,8 @@ contract artAuction is ERC721 {
         artwork.originalArtist,
         artwork.available);
     }
+    
+    event bidPlaced(address bidder, uint bid, uint auctionID);
     function placeBid(uint auctionID) public payable {
         require(
             isRegistered[msg.sender],
@@ -325,6 +342,7 @@ contract artAuction is ERC721 {
         auction.refunds[msg.sender] += msg.value;
         auction.winner = msg.sender;
         auction.winningBid = msg.value;
+        emit bidPlaced(msg.sender, msg.value, auction.auctionID);
         emit  auctionState(auction.auctionID, auction.seller, auction.artID, auction.winner, auction.winningBid, auction.basePrice, auction.endTime, auction.ended);
     }
     function endAuction(uint auctionID) public {
@@ -340,8 +358,7 @@ contract artAuction is ERC721 {
             artwork.saleType = "";
         }
 
-
-        if (artwork.originalArtist != auction.seller) {
+        else if (artwork.originalArtist != auction.seller) {
             uint royaltyPercentage = artwork.royaltyP;
             uint royaltyAmt = (royaltyPercentage * auction.winningBid) / 100;
             uint sellerAmt = auction.winningBid - royaltyAmt;
@@ -351,7 +368,7 @@ contract artAuction is ERC721 {
             (bool Ssuccess, ) = auction.seller.call{value: sellerAmt}("");
             require(Ssuccess, "Transfer to seller failed");
             artwork.saleType = "";
-        } else {
+        } else if (artwork.originalArtist == auction.seller){
             mintNFT(auction.winner, auction.artID);
             (bool success, ) = artwork.originalArtist.call{value: auction.winningBid}("");
             require(success, "Transfer failed");
@@ -373,7 +390,7 @@ contract artAuction is ERC721 {
         artwork.originalArtist,
         artwork.available);
     }
-    event withdraw(uint amount, address indexed receiver);
+    event withdraw(uint amount, address indexed receiver, uint auctionID);
     function withdrawRefund(uint auctionID) public { //called by participants of auction who didnt win
         Auction storage auction = auctions[auctionID];
         require(auction.ended, "Auction hasn't ended yet");
@@ -389,7 +406,7 @@ contract artAuction is ERC721 {
             require(success, "Refund transfer failed");
             }
         auction.refunds[msg.sender] = 0;
-        emit withdraw(refund, msg.sender);
+        emit withdraw(refund, msg.sender, auction.auctionID);
     }
     //DIRECT SALES ------------------------------------------------------------------------------------
     event DSState(uint indexed directSaleID ,

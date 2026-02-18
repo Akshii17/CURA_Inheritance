@@ -132,3 +132,15 @@ export const GET_FOLLOWING_LIST = gql`
   }
   }
 `;
+
+export const GET_WITHDRAWALS = gql`
+  query GetWithdrawals ($user: Bytes!){
+  withdraws (where : {
+    receiver : $user
+  }){
+    auctionID
+    receiver
+    amount
+  }
+  }
+`;

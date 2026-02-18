@@ -310,7 +310,7 @@ const ArtPage = () => {
                 /* Creator Buttons */
                 <div className="flex flex-col gap-3">
                   {/* SELL ARTWORK */}
-                  {isCurrentlyForSale && (currentOwner===loggedArtistAddress) && (
+                  {isCurrentlyForSale && (currentOwner?.toLowerCase()===loggedArtistAddress) && (
                     <button
                       onClick={() => setOpen(true)}
                       className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs transition-all bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] cursor-pointer"

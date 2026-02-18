@@ -4,11 +4,57 @@ import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import { axiosInstance } from "../lib/axiosInstance";
 import { useState, useRef, useEffect } from "react";
+import coverImg from "../assets/coverImg.jpeg";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { request, gql } from "graphql-request";
 import { GET_WITHDRAWAL_INFO } from "../lib/GraphqlQueries";
 import { User, Share, X, Save, Camera, Heart, MessageCircle, Plus, Upload, Bell, MapPin, Link as LinkIcon, Calendar, ArrowRight, TrendingUp, Wallet } from "lucide-react";
 import { ethers } from "ethers";
+
+const ArtistFollowingStrip = ({ artists = [] }) => {
+  if (!artists.length) return null;
+
+  return (
+    <div className="mt-12 mb-12">
+      <h2 className="text-2xl mb-4 font-serif">Artists You Follow</h2>
+
+      {/* Grey Horizontal Strip */}
+      <div className="w-full bg-black border-2 border-[#7C3AED] rounded-2xl p-4 overflow-x-auto">
+        <div className="flex gap-4">
+          {artists.map((artist) => (
+            <Link
+              key={artist.artistAddress}
+              to={`/artist/${artist.artistAddress}`}
+              className="flex items-center gap-3 min-w-max bg-[#2a2a2a] hover:bg-[#323232] transition-all px-4 py-2 rounded-xl border border-[#7C3AED]/40 hover:border-[#7C3AED] hover:shadow-lg hover:shadow-[#7C3AED]/40"
+            >
+              {/* Avatar */}
+              <div className="w-10 h-10 rounded-full overflow-hidden bg-white/10">
+                {artist.pfpHash && (
+                  <img
+                    src={`https://gateway.pinata.cloud/ipfs/${artist.pfpHash}`}
+                    alt={artist.name}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+              </div>
+
+              {/* Name */}
+              <div>
+                <p className="text-sm font-semibold text-white">
+                  {artist.name || "Unnamed"}
+                </p>
+                <p className="text-xs text-gray-400">
+                  @{artist.username || "username"}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 const Profile = () => {
   const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
@@ -56,6 +102,8 @@ const Profile = () => {
   const [image, setImage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [showWithdrawHistory, setShowWithdrawHistory] = useState(false);
+
 
   const imageRef = useRef(null);
 
@@ -434,38 +482,39 @@ const Profile = () => {
       {/* ============================================================ */}
       {/* CREATE ARTWORK MODAL */}
       {/* ============================================================ */}
+
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-white/10 rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col">
+
             {/* Header */}
-            <div className="p-6 border-b border-white/10">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold bg-gradient-to-r from-[#F3E5AB] to-[#7C3AED] bg-clip-text text-transparent">
-                  Create Artwork
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setDescription("");
-                    setTitle("");
-                    setRoyaltyP("");
-                    setImage(null);
-                    setImagePreview(null);
-                  }}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
+            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-[#F3E5AB] to-[#7C3AED] bg-clip-text text-transparent">
+                Create Artwork
+              </h2>
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setDescription("");
+                  setTitle("");
+                  setRoyaltyP("");
+                  setImage(null);
+                  setImagePreview(null);
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 space-y-5">
+            {/* Body (SCROLLS) */}
+            <div className="p-6 space-y-5 overflow-y-auto">
               {/* Image Upload */}
               <div>
                 <label className="block text-sm font-semibold text-gray-400 mb-3">
                   Artwork Image
                 </label>
+
                 <div
                   onClick={() => imageRef.current?.click()}
                   className="relative border-2 border-dashed border-white/10 rounded-2xl p-8 hover:border-[#7C3AED]/50 transition-all cursor-pointer group"
@@ -474,7 +523,7 @@ const Profile = () => {
                     <div className="relative">
                       <img
                         src={imagePreview}
-                        className="w-full h-64 object-cover rounded-xl"
+                        className="w-full h-48 object-cover rounded-xl"
                         alt="Preview"
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
@@ -487,6 +536,7 @@ const Profile = () => {
                       <p className="text-gray-400 text-sm">Click to upload image</p>
                     </div>
                   )}
+
                   <input
                     ref={imageRef}
                     type="file"
@@ -539,7 +589,7 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer (ALWAYS VISIBLE) */}
             <div className="p-6 border-t border-white/10 flex gap-3">
               <button
                 onClick={() => {
@@ -555,6 +605,7 @@ const Profile = () => {
               >
                 Cancel
               </button>
+
               <button
                 onClick={handleSubmit}
                 disabled={isLoading}
@@ -567,10 +618,15 @@ const Profile = () => {
         </div>
       )}
 
+
+
       {/* ============================================================ */}
       {/* HERO BANNER */}
       {/* ============================================================ */}
-      <div className="relative h-80 bg-gradient-to-br from-[#7C3AED] via-[#5f2db7] to-[#1a1a1a] overflow-hidden">
+      <div
+        className="relative h-80 bg-cover bg-center overflow-hidden"
+        style={{ backgroundImage: `url(https://wallpapers.com/images/hd/retrowave-mountain-cover-hpjdu2b1wxpcpwt3.jpg)` }}
+      >
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-10 left-10 w-72 h-72 bg-[#F3E5AB] rounded-full blur-3xl"></div>
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#7C3AED] rounded-full blur-3xl"></div>
@@ -668,7 +724,7 @@ const Profile = () => {
                 </div>
               ) : (
                 <>
-                  <h1 className="text-4xl lg:text-5xl font-bold mb-3 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                  <h1 className="text-[#F3E5AB] text-5xl mt-1 mb-4 font-serif">
                     {name}
                   </h1>
                   <p className="text-lg text-gray-400 mb-4">
@@ -687,7 +743,7 @@ const Profile = () => {
                       </div>
                     </div>
                     <div className="bg-white/5 border border-white/10 rounded-2xl px-8 py-4 backdrop-blur-sm">
-                      <div className="text-3xl font-bold text-[#F3E5AB]">{filteredArtworks.length}</div> 
+                      <div className="text-3xl font-bold text-[#F3E5AB]">{filteredArtworks.length}</div>
                       {/* ?????????? */}
                       <div className="text-xs text-gray-500 uppercase tracking-wider font-semibold mt-1">
                         Following
@@ -881,13 +937,76 @@ const Profile = () => {
         )}
 
         {/* ============================================================ */}
+{/* WITHDRAWAL ROW – STATIC WITH DROPDOWN */}
+{/* ============================================================ */}
+<section className="mb-10">
+  <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 md:p-8">
+
+    {/* Top Row */}
+    <div className="flex justify-between items-center gap-6">
+      <div className="flex items-center gap-6">
+        <div className="w-14 h-14 bg-[#7C3AED]/10 rounded-2xl flex items-center justify-center text-[#7C3AED]">
+          <Wallet size={28} />
+        </div>
+
+        <div>
+          <h4 className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-1 font-bold">
+            Withdrawal Balance
+          </h4>
+          <p className="text-3xl font-serif font-bold text-[#F3E5AB]">
+            1.245 ETH
+          </p>
+        </div>
+      </div>
+
+      {/* Arrow */}
+      <button
+        onClick={() => setShowWithdrawHistory(!showWithdrawHistory)}
+        className="p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+      >
+        {showWithdrawHistory ? "⌃" : "⌄"}
+      </button>
+    </div>
+
+    {/* Dropdown Content */}
+    {showWithdrawHistory && (
+      <div className="mt-6 pt-6 border-t border-white/10 space-y-4 animate-in fade-in slide-in-from-top-2">
+        
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-zinc-300">Dreamscape #12</span>
+          <span className="text-[#7C3AED] font-mono font-bold">+0.45 ETH</span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-zinc-300">Neon Silence</span>
+          <span className="text-[#7C3AED] font-mono font-bold">+0.30 ETH</span>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="text-sm text-zinc-300">Astral Bloom</span>
+          <span className="text-[#7C3AED] font-mono font-bold">+0.495 ETH</span>
+        </div>
+
+      </div>
+    )}
+  </div>
+</section>
+
+
+        <ArtistFollowingStrip
+          artists={artists.filter(
+            (a) => a.artistAddress?.toLowerCase() !== loggedArtistAddress
+          )}
+        />
+
+
+        {/* ============================================================ */}
         {/* YOUR COLLECTION */}
         {/* ============================================================ */}
         <div>
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-bold">Your Collection</h2>
-            <span className="px-4 py-2 rounded-full bg-white/5 text-gray-400 font-semibold text-sm">
+            <h2 className="text-[#F3E5AB] text-4xl mt-5 mb-2 font-serif">Your Collection</h2>            <span className="px-4 py-2 rounded-full bg-white/5 text-gray-400 font-semibold text-sm">
               {filteredArtworks.length} {filteredArtworks.length === 1 ? "Artwork" : "Artworks"}
             </span>
           </div>
@@ -901,11 +1020,10 @@ const Profile = () => {
               <button
                 key={item.value}
                 onClick={() => setCollectionFilter(item.value)}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  collectionFilter === item.value
-                    ? "bg-[#7C3AED] text-[#F3E5AB] shadow-lg shadow-[#7C3AED]/50"
-                    : "bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10"
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${collectionFilter === item.value
+                  ? "bg-[#7C3AED] text-[#F3E5AB]"
+                  : "bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10"
+                  }`}
               >
                 {item.label}
               </button>
@@ -950,6 +1068,7 @@ const Profile = () => {
             </div>
           )}
         </div>
+
       </main>
 
       {/* ============================================================ */}
@@ -1004,6 +1123,8 @@ const Profile = () => {
         </div>
       )}
     </div>
+
+
   );
 };
 

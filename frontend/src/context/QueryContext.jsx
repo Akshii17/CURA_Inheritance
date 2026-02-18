@@ -6,7 +6,8 @@ import {
   GET_DS,
   GET_ARTISTS,
   GET_LIKED_ARTWORKS,
-  GET_FOLLOWING_LIST
+  GET_FOLLOWING_LIST,
+  GET_WITHDRAWALS
 } from "../lib/GraphqlQueries";
 import { useArtistContext } from "./ArtistContext";
 
@@ -14,7 +15,7 @@ const QueryContext = createContext(null);
 export const useQueryContext = () => useContext(QueryContext);
 
 const GRAPHQL_ENDPOINT =
-  "https://api.studio.thegraph.com/query/1723072/cura-graph-4/version/latest";
+  "https://api.studio.thegraph.com/query/1723072/cura-graph-5/version/latest";
 
 export const QueryContextProvider = ({ children }) => {
   const { artist, contract } = useArtistContext();
@@ -110,6 +111,22 @@ export const QueryContextProvider = ({ children }) => {
       console.log(data.follows);
       console.log(1);
       setFollowing(data.follows);
+    } catch (err) {
+      console.log(err);
+
+      setError(err.message);
+    }
+  };
+
+  const fetchWithdrawals = async () => {
+    console.log("hey");
+
+    try {
+      const data = await request(GRAPHQL_ENDPOINT, GET_WITHDRAWALS, {
+        user: artist.artistAddress.toLowerCase()
+      });
+
+      setFollowing(data.withdraws);
     } catch (err) {
       console.log(err);
 
