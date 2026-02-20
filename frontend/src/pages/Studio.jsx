@@ -21,6 +21,7 @@ const Studio = () => {
   const TABS = ["Your Art", "Purchased", "Favorites"];
   const STATUS_FILTERS = ["Live", "Up for Sale", "Sold", "Unsold"];
   const [status, setStatus] = useState(null);
+  const [favStatus, setFavStatus] = useState(null);
 
   const [owners, setOwners] = useState({});
 
@@ -89,11 +90,11 @@ const Studio = () => {
 
   //filters in Favorites
   const filteredLikedArt = likedArt.filter((art) => {
-    if (!status) return true;
+    if (!favStatus) return true;
     return art.saleType === "direct" || art.saleType === "auction";
   });
 
-  const isForSaleActive = status === "Up for Sale";
+  const isForSaleActive = favStatus === "Up for Sale";
 
   return (
 
@@ -117,13 +118,15 @@ const Studio = () => {
                 onClick={() => {
                   prevTab.current = activeTab;
                   setActiveTab(index);
+                  setStatus(null);
+                  setFavStatus(null);
                 }}
                 className="relative flex justify-center pb-4 text-sm tracking-wide"
               >
                 <span
                   className={`transition-colors ${isActive
-                      ? "text-white"
-                      : "text-white/50 hover:text-white"
+                    ? "text-white"
+                    : "text-white/50 hover:text-white"
                     }`}
                 >
                   {label}
@@ -178,7 +181,7 @@ const Studio = () => {
 
           {/* ART RESULTS / EMPTY STATE */}
           <div className="mt-6">
-            {filteredArt.length === 10 ? (
+            {filteredArt.length === 0 ? (
               <p className="text-gray-500 text-lg text-center mt-10">
                 No artworks yet
               </p>
@@ -200,30 +203,39 @@ const Studio = () => {
       )}
 
       {activeTab === 2 && (
-        filteredLikedArt.length === 0 ? (
-          <p className="text-gray-500 text-lg text-center mt-10">
-            No liked artworks
-          </p>
-        ) : (
-          <>
-            <button
-              onClick={() => setStatus(isForSaleActive ? null : "Up for Sale")}
-              className={`flex mt-6 items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
-                    ${isForSaleActive ? "border-white text-white" : "border-neutral-800 text-gray-500 hover:border-neutral-600"}`}
-            >
-              For Sale
+        <div className="mt-6">
 
-              {isForSaleActive && (
-                <X
-                  size={14}
-                  className="opacity-70 hover:opacity-100"
-                />
-              )}
-            </button>
-            
-            <ArtGrid artworks={filteredLikedArt} />
-          </>
-        )
+          {/* Filter button ALWAYS visible */}
+          <button
+            onClick={() =>
+              setFavStatus(isForSaleActive ? null : "Up for Sale")
+            }
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm border transition cursor-pointer
+        ${isForSaleActive
+                ? "border-white text-white"
+                : "border-neutral-800 text-gray-500 hover:border-neutral-600"
+              }`}
+          >
+            For Sale
+
+            {isForSaleActive && (
+              <X size={14} className="opacity-70 hover:opacity-100" />
+            )}
+          </button>
+
+          {/* Results */}
+          <div className="mt-6">
+            {filteredLikedArt.length === 0 ? (
+              <p className="text-gray-500 text-lg text-center mt-10">
+                {favStatus
+                  ? "No liked artworks currently for sale"
+                  : "No liked artworks"}
+              </p>
+            ) : (
+              <ArtGrid artworks={filteredLikedArt} />
+            )}
+          </div>
+        </div>
       )}
 
 

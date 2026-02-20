@@ -57,7 +57,7 @@ const ArtPage = () => {
   });
 
   console.log(isFavorite);
-  console.log(likedArtworks);
+  console.log("liked:", likedArtworks);
 
 
   const handleFavoriteClick = async (e) => {
