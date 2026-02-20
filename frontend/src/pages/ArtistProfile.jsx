@@ -97,7 +97,9 @@ const ArtistProfile = () => {
                                 {artistData.name || "Unnamed Artist"}
                             </h1>
                             <p className="text-lg text-gray-400 mb-4">
-                                @{artistData.username || "username"} <span className="text-gray-600">•</span> Digital Artist & Curator
+                                @{artistData.username || "username"} 
+                                <span className="text-gray-600">{" "}•{" "}</span> 
+                                {artistData.tagline || "Exploring digital creativity"}
                             </p>
                             
                             {/* Metadata Strip */}
@@ -111,7 +113,7 @@ const ArtistProfile = () => {
                             </div>
 
                             <p className="text-gray-300 leading-relaxed mb-6 max-w-2xl">
-                                {artistData.bio || "No bio available."}
+                                {artistData.bio || "Exploring and collecting digital experiences on CURA."}
                             </p>
 
                             {/* Stats Cards [cite: 243] */}

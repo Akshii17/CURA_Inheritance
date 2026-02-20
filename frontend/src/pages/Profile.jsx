@@ -40,7 +40,9 @@ const ArtistFollowingStrip = ({ artists = [] }) => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-white/10" />
+                  <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                    <User size={20} className="text-neutral-500" />
+                  </div>
                 )}
               </div>
 
@@ -91,8 +93,9 @@ const ArtistFollowerStrip = ({ artists = [] }) => {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-white/10" />
-                )}
+                  <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                    <User size={20} className="text-neutral-500" />
+                  </div>)}
               </div>
 
               {/* Tooltip */}
@@ -428,8 +431,8 @@ const Profile = () => {
     setProfileImageHash(artistObject.pfpHash || "");
     setEditName(artistObject.name || "");
     setEditUsername(artistObject.username || "");
-    setEditTagline(artistObject.tagline || "");
-    setEditAbout(artistObject.bio || "");
+    setEditTagline(artistObject.tagline || "Exploring digital creativity");
+    setEditAbout(artistObject.bio || "Exploring and collecting digital experiences on CURA.");
   }, [artistObject]);
 
   const handProfileImageChange = (e) => {
@@ -718,17 +721,24 @@ const Profile = () => {
             {/* Avatar */}
             <div className="relative group">
               <div className="w-40 h-40 rounded-3xl border-4 border-[#7C3AED] overflow-hidden bg-gradient-to-br from-[#7C3AED]/20 to-transparent shadow-2xl">
-                <img
-                  src={
-                    newProfileImage
-                      ? URL.createObjectURL(newProfileImage)
-                      : profileImageHash
-                        ? `https://gateway.pinata.cloud/ipfs/${profileImageHash}`
-                        : ""
-                  }
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
+                {newProfileImage ? (
+                  <img
+                    src={URL.createObjectURL(newProfileImage)}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : profileImageHash ? (
+                  <img
+                    src={`https://gateway.pinata.cloud/ipfs/${profileImageHash}`}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                    <User size={60} className="text-neutral-600" />
+                  </div>
+                )}
+
                 {isEditing && (
                   <div
                     className="absolute inset-0 bg-black/70 flex items-center justify-center cursor-pointer"

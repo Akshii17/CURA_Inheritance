@@ -213,7 +213,7 @@ const Modal = ({ isOpen, onClose, id }) => {
                 Creating...
               </span>
             ) : (
-              "Create"
+              "Create Sale"
             )}
           </button>
 

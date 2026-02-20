@@ -8,8 +8,8 @@ import { Link } from "react-router-dom";
 import Modal from "../components/Modal";
 import { GET_BID_HISTORY } from "../lib/GraphqlQueries";
 import { request, gql } from "graphql-request";
+import { fetchEthPriceINR } from "../components/ethToRupee";
 import { Heart, LoaderCircle } from "lucide-react";
-import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const ArtPage = () => {
   const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/1723072/cura-graph-5/version/latest";
@@ -36,9 +36,7 @@ const ArtPage = () => {
   }, []);
 
 
-  // --- NEW LIKE STATES ---
-  const [isLiked, setIsLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 20)); // Dummy initial count
+
 
 
   const { artist, contract, isConnected, address } = useArtistContext();
@@ -54,18 +52,13 @@ const ArtPage = () => {
 
   const [isFavorite, setIsFavorite] = useState(() => {
     return likedArtworks?.some(
-      (item) => item.artworkID === artwork.artWorkID
+      (item) => String(item.artWorkID) === String(artwork.artworkID)
     ) || false;
   });
 
-  // --- LIKE HANDLER ---
-  // const handleLike = () => {
-  //   setIsLiked(!isLiked);
-  //   setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
-  //   toast.success(isLiked ? "Removed from favorites" : "Added to favorites", {
-  //     style: { background: "#333", color: "#fff", fontSize: "12px" },
-  //   });
-  // };
+  console.log(isFavorite);
+  console.log(likedArtworks);
+
 
   const handleFavoriteClick = async (e) => {
     e.preventDefault();    // stops <Link>
@@ -168,7 +161,7 @@ const ArtPage = () => {
 
   const [tick, setTick] = useState(0);
   const isCreator = artwork?.originalArtist.toLowerCase() === loggedArtistAddress;
-  const isCollector = currentOwner && currentOwner.toLowerCase() !== artwork.originalArtist.toLowerCase();
+  const isCollector = currentOwner?.toLowerCase() === loggedArtistAddress && currentOwner.toLowerCase() !== artwork.originalArtist.toLowerCase();
   const isCurrentlyForSale = artwork?.available;
 
   useEffect(() => {
@@ -360,7 +353,7 @@ const ArtPage = () => {
                     <div className="text-right">
                       <p className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mb-1">Time Left</p>
                       <p className="text-lg font-mono text-[#F3E5AB]">
-                        {remainingTime.hours}h {remainingTime.minutes}m {remainingTime.seconds}s
+                        {remainingTime.days}d {remainingTime.hours}h {remainingTime.minutes}m {remainingTime.seconds}s
                       </p>
                     </div>
                   )}
@@ -402,7 +395,7 @@ const ArtPage = () => {
                       {isLoading ? (
                         <span className="flex items-center justify-center gap-2">
                           <LoaderCircle className="w-4 h-4 animate-spin" />
-                          Ending Auction...
+                          ENDING AUCTION...
                         </span>
                       ) : (
                         "END AUCTION"
@@ -413,12 +406,12 @@ const ArtPage = () => {
                     <button
                       onClick={handleEndSale}
                       disabled={isLoading}
-                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs bg-[#7C3AED] hover:bg-[#5f2db7] text-[#F3E5AB] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                       {isLoading ? (
                         <span className="flex items-center justify-center gap-2">
-                          <LoaderCircle className="w-4 h-4 animate-spin" />
-                          Ending Sale...
+                          <LoaderCircle className="w-4 h-4 animate-spin " />
+                          ENDING SALE...
                         </span>
                       ) : (
                         "END SALE"
@@ -428,12 +421,16 @@ const ArtPage = () => {
                 </div>
               ) : isCollector ? (
                 <button onClick={() => setOpen(true)} className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] cursor-pointer text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs">LIST FOR RESALE</button>
-              ) : (
+              ) : artwork.saleType != "" ? (
                 <Link to={artwork.saleType === "auction" ? `/auctioncheckout/${artwork.artworkID}` : `/directcheckout/${artwork.artworkID}`}>
                   <div className="w-full py-5 bg-[#7C3AED] hover:bg-[#5f2db7] cursor-pointer text-[#F3E5AB] rounded-xl font-bold tracking-[0.3em] text-xs text-center">
                     {artwork.saleType === "auction" ? "PLACE YOUR BID" : "PURCHASE ARTWORK"}
                   </div>
                 </Link>
+              ) : (
+                <div className="w-full py-5 rounded-xl font-bold tracking-[0.3em] text-xs text-center text-neutral-500 border border-white/10">
+                  NOT FOR SALE
+                </div>
               )}
             </div>
           </div>

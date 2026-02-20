@@ -3,10 +3,11 @@ import { useMemo } from "react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { Lock, LoaderCircle } from "lucide-react";
+import { fetchEthPriceINR } from "../components/ethToRupee";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import { ethers } from "ethers";
-import { fetchEthPriceINR } from "../context/ethToRupee";
+
 
 const DirectSaleCheckout = () => {
 

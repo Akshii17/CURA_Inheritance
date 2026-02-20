@@ -6,9 +6,9 @@ import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { ethers } from "ethers";
+import { fetchEthPriceINR } from "./ethToRupee";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
-import { fetchEthPriceINR } from "../context/ethToRupee";
 
 
 
@@ -132,6 +132,9 @@ const ArtCard = ({ art, page }) => {
     : null;
 
 
+  const hasWinningBid =
+    auctionObject?.winningBid &&
+    BigInt(auctionObject.winningBid) > 0n;
 
 
 
@@ -234,25 +237,22 @@ const ArtCard = ({ art, page }) => {
             <p className="text-sm text-gray-300">
               {art.saleType === "auction" && (
                 <span className="text-gray-500">
-                  Current Bid:{" "}
-                  {auctionObject?.winningBid
-                    ? priceInEthWin
-                    : priceInEthAuc}{" "}
-                  ETH
+                  {hasWinningBid ? "Current Bid:" : "Base Price:"}{" "}
+                  {hasWinningBid ? priceInEthWin : priceInEthAuc} ETH
                   {ethToInr && (
                     <>
                       {" "}
                       (₹{" "}
-                      {(
-                        auctionObject?.winningBid
-                          ? priceInInrWin
-                          : priceInInrAuc
-                      )?.toLocaleString()}
+                      {(hasWinningBid
+                        ? priceInInrWin
+                        : priceInInrAuc)?.toLocaleString()}
                       )
                     </>
                   )}
                 </span>
               )}
+
+
 
               {art.saleType === "direct" && (
                 <span className="text-gray-500">

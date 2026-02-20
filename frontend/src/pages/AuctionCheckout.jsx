@@ -2,10 +2,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { Clock, Gavel, LoaderCircle } from "lucide-react";
 import { ethers } from "ethers";
+import { fetchEthPriceINR } from "../components/ethToRupee";
 import { useArtistContext } from "../context/ArtistContext";
 import { useQueryContext } from "../context/QueryContext";
 import toast from "react-hot-toast";
-import { fetchEthPriceINR } from "../context/ethToRupee";
 
 const AuctionCheckout = () => {
 

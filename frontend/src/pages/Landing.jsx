@@ -77,7 +77,7 @@ const Landing = () => {
       await tx.wait();
 
 
-      toast.success("Registration successful 🎉");
+      toast.success("Registration successful");
       await fetchArtist();
       setShowModal(false);
       setName("");
@@ -550,7 +550,7 @@ const Landing = () => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full py-2 mt-2 bg-indigo-600 rounded hover:bg-indigo-700"
+              className="w-full py-2 mt-2 bg-[#7C3AED] rounded hover:bg-[#5f2db7]"
             >
               {isSubmitting ? "Submitting..." : "Submit"}
             </button>
